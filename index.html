@@ -192,18 +192,27 @@ body.dark .day-cell.profit .day-pairs { color: rgba(94,235,160,0.6); }
 body.dark .day-cell.loss .day-pairs   { color: rgba(255,133,133,0.6); }
 
 /* ── DARK MODE: ANALYSIS TAB ── */
-body.dark .stat-card { background: #16161e; border-color: #2e2c28; }
-body.dark .stat-card.pf-good { background: #0e2018; border-color: #2a6040; }
-body.dark .stat-card.pf-bad  { background: #21100f; border-color: #6b2020; }
-body.dark .stat-card.pf-neutral { background: #1e1a10; border-color: #4a3a18; }
-body.dark .stat-label { color: rgba(255,255,255,0.35); }
-body.dark .stat-value { color: #e0d8c8; }
-body.dark .analysis-card { background: #16161e; border-color: #2e2c28; }
-body.dark .analysis-title { color: rgba(255,255,255,0.3); }
-body.dark .capital-bar { background: linear-gradient(135deg, #1a1a2e 0%, #12121c 100%); }
-body.dark .dd-stat { background: #1c1c26; border-color: #2e2c28; }
-body.dark .dd-stat-label { color: rgba(255,255,255,0.3); }
-body.dark .max-loss-bar { background: linear-gradient(90deg, rgba(248,113,113,0.1) 0%, rgba(248,113,113,0.04) 100%); border-color: rgba(248,113,113,0.25); }
+body.dark .stat-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+body.dark .stat-card.pf-good { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.2); box-shadow: 0 0 20px rgba(74,222,128,0.08); }
+body.dark .stat-card.pf-bad  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); box-shadow: 0 0 20px rgba(248,113,113,0.08); }
+body.dark .stat-card.pf-neutral { background: rgba(200,169,110,0.08); border-color: rgba(200,169,110,0.2); }
+body.dark .stat-label { color: rgba(255,255,255,0.3); letter-spacing: 2.5px; }
+body.dark .stat-value { color: #f0ead8; }
+body.dark .analysis-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+body.dark .analysis-title { color: rgba(255,255,255,0.25); letter-spacing: 3px; }
+body.dark .capital-bar { background: linear-gradient(135deg, rgba(26,26,46,0.9) 0%, rgba(18,18,28,0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(200,169,110,0.15); box-shadow: 0 0 40px rgba(200,169,110,0.05), inset 0 1px 0 rgba(255,255,255,0.05); }
+body.dark .dd-stat { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); }
+body.dark .dd-stat-label { color: rgba(255,255,255,0.25); }
+body.dark .max-loss-bar { background: linear-gradient(90deg, rgba(248,113,113,0.08) 0%, rgba(248,113,113,0.02) 100%); border-color: rgba(248,113,113,0.2); backdrop-filter: blur(8px); }
+/* Glow on key numbers */
+body.dark #total-pnl-all, body.dark #current-balance { text-shadow: 0 0 20px currentColor; }
+body.dark #stat-pnl, body.dark #stat-wr, body.dark #stat-pf { text-shadow: 0 0 12px currentColor; }
+body.dark #stat-avg-win { text-shadow: 0 0 10px rgba(74,222,128,0.6); }
+body.dark #stat-avg-loss { text-shadow: 0 0 10px rgba(248,113,113,0.6); }
+/* Terminal divider */
+body.dark .analysis-period { border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 14px; }
+body.dark .period-btn { background: transparent; border-color: rgba(255,255,255,0.08); color: rgba(255,255,255,0.3); }
+body.dark .period-btn.active { background: rgba(200,169,110,0.12); border-color: rgba(200,169,110,0.4); color: var(--gold-lt); box-shadow: 0 0 12px rgba(200,169,110,0.15); }
 
 
 
@@ -1226,8 +1235,12 @@ body {
           <div class="hp-max-label">LOSS TODAY / <span class="hp-max-value" id="hp-max-label-val">MAX $—</span></div>
         </div>
         <div style="text-align:right">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:rgba(255,255,255,0.85)" id="hp-remaining">—</div>
-          <div style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3)">REMAINING · <span id="hp-used-pct">0%</span> USED</div>
+          <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-end">
+            <span style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3)">LEFT</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:rgba(255,255,255,0.85)" id="hp-remaining">—</span>
+            <span style="font-size:8px;letter-spacing:1px;color:rgba(255,255,255,0.25)">·</span>
+            <span style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3)"><span id="hp-used-pct">0%</span> USED</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1445,6 +1458,29 @@ body {
 
 
 <script>
+// ── ANIMATED COUNTER ──
+function animateCounter(el, targetText, duration = 800) {
+  if (!el || !document.body.classList.contains('dark')) { el.textContent = targetText; return; }
+  // Extract number from text like "+1,652.55" or "-$332.63" or "33%"
+  const raw = targetText.replace(/[^0-9.\-]/g, '');
+  const target = parseFloat(raw);
+  if (isNaN(target) || targetText === '—') { el.textContent = targetText; return; }
+  const prefix = targetText.match(/^[^0-9\-]*/)?.[0] || '';
+  const suffix = targetText.match(/[^0-9\.]+$/)?.[0] || '';
+  const decimals = (raw.split('.')[1] || '').length;
+  const start = performance.now();
+  const from = 0;
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3); // ease out cubic
+    const val = from + (target - from) * ease;
+    el.textContent = prefix + val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = targetText;
+  }
+  requestAnimationFrame(tick);
+}
+
 // ── THEME COLOR HELPERS ──
 function clrProfit() { return document.body.classList.contains('dark') ? '#4ade80' : '#2D6A4F'; }
 function clrLoss()   { return document.body.classList.contains('dark') ? '#f87171' : '#9B2335'; }
@@ -1764,10 +1800,12 @@ function updateBalanceDisplay() {
   const balance = capital + total;
   // Analysis tab
   const totalEl = document.getElementById("total-pnl-all");
-  totalEl.textContent = fmt(total) || "—";
+  const totalTxt = fmt(total) || "—";
   totalEl.style.color = total>=0 ? clrProfit() : clrLoss();
+  animateCounter(totalEl, totalTxt);
   const balEl = document.getElementById("current-balance");
-  balEl.textContent = capital>0 || total!==0 ? fmtMoney(balance) : "—";
+  const balTxt = capital>0 || total!==0 ? fmtMoney(balance) : "—";
+  animateCounter(balEl, balTxt);
   const pctEl = document.getElementById("growth-pct");
   if (capital > 0) {
     const pct = (total/capital)*100;
@@ -1921,9 +1959,11 @@ function updateStats() {
   const totalTrades = wins+losses;
   const wr = totalTrades>0?Math.round(wins/totalTrades*100):null;
   const pe = document.getElementById("stat-pnl");
-  pe.textContent = tradeDays>0?fmt(totalPnl):"—";
+  const peTxt = tradeDays>0?fmt(totalPnl):"—";
   pe.style.color = totalPnl>=0?clrProfit():clrLoss();
-  document.getElementById("stat-wr").textContent = wr!==null?wr+"%":"—";
+  animateCounter(pe, peTxt);
+  const wrEl = document.getElementById("stat-wr");
+  animateCounter(wrEl, wr!==null?wr+"%":"—");
   document.getElementById("stat-days").textContent = tradeDays||"—";
   document.getElementById("stat-wl").textContent = totalTrades>0?`${wins} / ${losses}`:"—";
   const pfEl = document.getElementById("stat-pf");
@@ -1942,11 +1982,11 @@ function updateStats() {
     pfEl.textContent = "—"; pfCard.className = "stat-card"; pfSub.textContent = ""; pfEl.style.color = clrInk();
   }
   const avgWinEl = document.getElementById("stat-avg-win");
-  avgWinEl.textContent = wins>0 ? fmt(winSum/wins) : "—";
   avgWinEl.style.color = clrProfit();
+  animateCounter(avgWinEl, wins>0 ? fmt(winSum/wins) : "—");
   const avgLossEl = document.getElementById("stat-avg-loss");
-  avgLossEl.textContent = losses>0 ? fmt(lossSum/losses) : "—";
   avgLossEl.style.color = clrLoss();
+  animateCounter(avgLossEl, losses>0 ? fmt(lossSum/losses) : "—");
 }
 
 const EMO_MAP = {calm:"😌",confident:"💪",fomo:"😰",revenge:"😤",fear:"😨",greedy:"🤑"};
