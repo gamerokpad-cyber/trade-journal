@@ -135,6 +135,76 @@ body.dark #fb-login-screen { background: var(--bg); }
 body.dark .cal-capital-strip { background: linear-gradient(135deg, #1a1a2e 0%, #12121c 100%); }
 body.dark .daily-hp-bar-wrap { background: linear-gradient(135deg, #0a0a14 0%, #0d0d1a 100%); }
 
+/* ── DARK MODE: CONTRAST BOOST ── */
+
+/* กล่องกำไร — border + bg สว่างขึ้น + glow */
+body.dark .day-cell.profit {
+  --profit-bg: #0e2018;
+  --profit-bd: #2a6040;
+  box-shadow: 0 0 0 1px #2a6040, inset 0 0 20px rgba(74,222,128,0.04);
+}
+/* กล่องขาดทุน */
+body.dark .day-cell.loss {
+  --loss-bg: #21100f;
+  --loss-bd: #6b2020;
+  box-shadow: 0 0 0 1px #6b2020, inset 0 0 20px rgba(248,113,113,0.04);
+}
+/* กล่อง today */
+body.dark .day-cell.today {
+  box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(200,169,110,0.25);
+}
+
+/* ตัวเลข P&L — text glow */
+body.dark .day-pnl { filter: brightness(1.3); }
+body.dark .day-cell.profit .day-pnl {
+  color: #5eeba0;
+  text-shadow: 0 0 8px rgba(74,222,128,0.5);
+}
+body.dark .day-cell.loss .day-pnl {
+  color: #ff8585;
+  text-shadow: 0 0 8px rgba(248,113,113,0.5);
+}
+
+/* วันที่ตัวเลข — สว่างขึ้น */
+body.dark .day-num { color: rgba(255,255,255,0.35); }
+body.dark .day-num.is-today { color: var(--gold); text-shadow: 0 0 6px rgba(200,169,110,0.5); }
+
+/* Tag pill — contrast สูงขึ้น */
+body.dark .day-tag {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.65);
+}
+body.dark .day-cell.profit .day-tag {
+  background: rgba(74,222,128,0.1);
+  border-color: rgba(74,222,128,0.25);
+  color: #5eeba0;
+}
+body.dark .day-cell.loss .day-tag {
+  background: rgba(248,113,113,0.1);
+  border-color: rgba(248,113,113,0.25);
+  color: #ff8585;
+}
+
+/* Pair text */
+body.dark .day-pairs { color: rgba(255,255,255,0.4); }
+body.dark .day-cell.profit .day-pairs { color: rgba(94,235,160,0.6); }
+body.dark .day-cell.loss .day-pairs   { color: rgba(255,133,133,0.6); }
+
+/* ── DARK MODE: ANALYSIS TAB ── */
+body.dark .stat-card { background: #16161e; border-color: #2e2c28; }
+body.dark .stat-card.pf-good { background: #0e2018; border-color: #2a6040; }
+body.dark .stat-card.pf-bad  { background: #21100f; border-color: #6b2020; }
+body.dark .stat-card.pf-neutral { background: #1e1a10; border-color: #4a3a18; }
+body.dark .stat-label { color: rgba(255,255,255,0.35); }
+body.dark .stat-value { color: #e0d8c8; }
+body.dark .analysis-card { background: #16161e; border-color: #2e2c28; }
+body.dark .analysis-title { color: rgba(255,255,255,0.3); }
+body.dark .capital-bar { background: linear-gradient(135deg, #1a1a2e 0%, #12121c 100%); }
+body.dark .dd-stat { background: #1c1c26; border-color: #2e2c28; }
+body.dark .dd-stat-label { color: rgba(255,255,255,0.3); }
+body.dark .max-loss-bar { background: linear-gradient(90deg, rgba(248,113,113,0.1) 0%, rgba(248,113,113,0.04) 100%); border-color: rgba(248,113,113,0.25); }
+
 
 
 /* ── RESET & BASE ── */
@@ -424,6 +494,8 @@ body {
   position: relative; overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   box-shadow: var(--shadow);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
 }
 .day-cell:active { transform: scale(0.96); }
 .day-cell.profit { border-color: var(--profit-bd); background: var(--profit-bg); }
@@ -436,9 +508,10 @@ body {
 .day-num { font-size: 11px; color: var(--ink-faint); margin-bottom: 3px; }
 .day-num.is-today { color: var(--gold); font-weight: 600; }
 .day-pnl { font-size: 12px; font-weight: 500; }
-.day-pairs { font-size: 10px; color: var(--ink-faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.day-tags { display: flex; flex-wrap: nowrap; gap: 2px; margin-top: 3px; overflow: hidden; }
+.day-pairs { font-size: 10px; color: var(--ink-faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+.day-tags { display: flex; flex-wrap: nowrap; gap: 2px; margin-top: 3px; overflow: hidden; justify-content: center; }
 .day-tag { font-size: 9px; background: var(--bg-deep); border: 1px solid var(--ink-ghost); border-radius: 3px; padding: 1px 4px; color: var(--ink-mid); }
+.day-icons { justify-content: center; }
 .day-icons { font-size: 10px; margin-top: 2px; display: flex; gap: 3px; }
 .day-trade-count { font-size: 9px; color: var(--ink-faint); margin-top: 2px; }
 .pnl-bar { position: absolute; bottom: 0; left: 0; height: 3px; width: 100%; border-radius: 0 0 6px 6px; }
@@ -516,20 +589,6 @@ body {
 .emo-btn.active { border-color: var(--gold); background: var(--gold-pale); }
 .emo-btn.active span { color: var(--navy); font-weight: 600; }
 
-/* Image upload */
-.img-upload-area {
-  border: 1px dashed var(--ink-ghost); border-radius: 8px; padding: 16px;
-  text-align: center; cursor: pointer; transition: all 0.15s;
-  color: var(--ink-faint); font-size: 12px;
-}
-.img-upload-area:hover { border-color: var(--ink-mid); color: var(--ink-mid); }
-.img-preview-wrap { position: relative; display: inline-block; margin-top: 8px; }
-.img-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 6px; display: block; }
-.img-remove {
-  position: absolute; top: 6px; right: 6px; background: rgba(26,34,53,0.8);
-  border: none; color: #fff; border-radius: 50%; width: 24px; height: 24px;
-  cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
-}
 
 /* Modal scrollable body */
 .modal-body { flex: 1; overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
@@ -632,18 +691,6 @@ body {
 }
 .add-trade-btn:hover { border-color: var(--navy); color: var(--navy); }
 
-/* Image modal */
-.img-modal-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(26,34,53,0.92);
-  z-index: 200; align-items: center; justify-content: center;
-}
-.img-modal-overlay.show { display: flex; }
-.img-modal-overlay img { max-width: 95vw; max-height: 90vh; border-radius: 8px; }
-.img-modal-close {
-  position: fixed; top: 16px; right: 16px; background: var(--navy-mid); border: none;
-  color: #fff; border-radius: 50%; width: 36px; height: 36px; cursor: pointer;
-  font-size: 18px; display: flex; align-items: center; justify-content: center;
-}
 
 /* ── ANALYSIS TAB ── */
 .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
@@ -704,9 +751,9 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 14px;
 }
-.max-loss-left { display: flex; align-items: center; gap: 7px; color: #9B2335; }
-.max-loss-label { font-size: 10px; letter-spacing: 1.5px; color: #9B2335; }
-.max-loss-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: #9B2335; }
+.max-loss-left { display: flex; align-items: center; gap: 7px; color: var(--loss); }
+.max-loss-label { font-size: 10px; letter-spacing: 1.5px; color: var(--loss); }
+.max-loss-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--loss); }
 
 /* Calendar strip 4-col */
 .cal-cap-sublabel { font-size: 8px; letter-spacing: 1px; color: rgba(252,165,165,0.45); margin-top: 1px; }
@@ -723,7 +770,7 @@ body {
 }
 .daily-hp-bar-wrap::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, #ef4444 0%, #f97316 40%, #22c55e 100%);
+  background: linear-gradient(90deg, #22c55e 0%, #f97316 60%, #ef4444 100%);
   opacity: 0.7;
 }
 .hp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -743,10 +790,10 @@ body {
   content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 5px;
   background: rgba(255,255,255,0.25); border-radius: 4px;
 }
-.hp-bar-fill.hp-safe   { background: linear-gradient(90deg, #22c55e, #4ade80); }
-.hp-bar-fill.hp-warn   { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.hp-bar-fill.hp-danger { background: linear-gradient(90deg, #ef4444, #f87171); animation: hp-pulse 1s infinite; }
-.hp-bar-fill.hp-dead   { background: #7f1d1d; width: 100% !important; }
+.hp-bar-fill.hp-safe   { background: linear-gradient(90deg, #22c55e 0%, #a3e635 70%, #fbbf24 100%); }
+.hp-bar-fill.hp-warn   { background: linear-gradient(90deg, #22c55e 0%, #f59e0b 60%, #ef4444 100%); }
+.hp-bar-fill.hp-danger { background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%); animation: hp-pulse 1s infinite; }
+.hp-bar-fill.hp-dead   { background: #7f1d1d; width: 4px !important; }
 @keyframes hp-pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 .hp-bar-segments {
   position: absolute; inset: 0; display: flex; pointer-events: none;
@@ -1178,7 +1225,10 @@ body {
           <div class="hp-loss-today hp-safe-text" id="hp-loss-today">$0</div>
           <div class="hp-max-label">LOSS TODAY / <span class="hp-max-value" id="hp-max-label-val">MAX $—</span></div>
         </div>
-        <div class="hp-status-text hp-safe-text" id="hp-status-text">SAFE</div>
+        <div style="text-align:right">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:rgba(255,255,255,0.85)" id="hp-remaining">—</div>
+          <div style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3)">REMAINING · <span id="hp-used-pct">0%</span> USED</div>
+        </div>
       </div>
     </div>
 
@@ -1378,14 +1428,6 @@ body {
       </div>
     </div>
 
-    <div class="field">
-      <label>CHART SCREENSHOT</label>
-      <div class="img-upload-area" id="upload-area" onclick="document.getElementById('inp-img').click()">
-        <div id="upload-placeholder">📸 แตะเพื่อแนบรูป screenshot</div>
-        <div id="img-preview-container"></div>
-      </div>
-      <input type="file" id="inp-img" accept="image/*" style="display:none" onchange="handleImage(event)"/>
-    </div>
 
     <div class="field">
       <label>NOTES</label>
@@ -1401,13 +1443,14 @@ body {
   </div>
 </div>
 
-<!-- Image fullscreen -->
-<div class="img-modal-overlay" id="img-modal" onclick="document.getElementById('img-modal').classList.remove('show')">
-  <button class="img-modal-close" onclick="document.getElementById('img-modal').classList.remove('show')">✕</button>
-  <img id="img-modal-src" src="" alt="chart"/>
-</div>
 
 <script>
+// ── THEME COLOR HELPERS ──
+function clrProfit() { return document.body.classList.contains('dark') ? '#4ade80' : '#2D6A4F'; }
+function clrLoss()   { return document.body.classList.contains('dark') ? '#f87171' : '#9B2335'; }
+function clrInk()    { return document.body.classList.contains('dark') ? '#e0d8c8' : '#1A2235'; }
+function clrGold()   { return document.body.classList.contains('dark') ? '#c8a96e' : '#B8975A'; }
+
 // ── DARK MODE ──
 const DARK_KEY = "trading-journal-dark";
 function toggleDarkMode() {
@@ -1722,14 +1765,14 @@ function updateBalanceDisplay() {
   // Analysis tab
   const totalEl = document.getElementById("total-pnl-all");
   totalEl.textContent = fmt(total) || "—";
-  totalEl.style.color = total>=0 ? "#2D6A4F" : "#9B2335";
+  totalEl.style.color = total>=0 ? clrProfit() : clrLoss();
   const balEl = document.getElementById("current-balance");
   balEl.textContent = capital>0 || total!==0 ? fmtMoney(balance) : "—";
   const pctEl = document.getElementById("growth-pct");
   if (capital > 0) {
     const pct = (total/capital)*100;
     pctEl.textContent = (pct>=0?"▲ +":"▼ ") + pct.toFixed(2) + "%";
-    pctEl.style.color = pct>=0 ? "#2D6A4F" : "#9B2335";
+    pctEl.style.color = pct>=0 ? clrProfit() : clrLoss();
   } else { pctEl.textContent = ""; }
   // Calendar strip
   const calPnlEl = document.getElementById("cal-total-pnl");
@@ -1751,7 +1794,7 @@ function updateBalanceDisplay() {
   const maxLossBar = document.getElementById("max-loss-bar");
   const maxLossVal = document.getElementById("max-loss-value");
   if (balance !== 0 || capital > 0) {
-    const effectiveBalance = capital > 0 ? Math.max(balance, capital * 0.01) : Math.abs(balance);
+    const effectiveBalance = Math.max(balance, capital * 0.10);
     const maxLoss = effectiveBalance * 0.05;
     const maxLossStr = "-$" + fmtMoney(maxLoss);
     if (maxLossEl) { maxLossEl.textContent = maxLossStr; }
@@ -1793,7 +1836,7 @@ function updateDailyHpBar(targetKey) {
     if (k >= dateStr) break;
     balBeforeDay += getDayPnl(trades[k]);
   }
-  const effectiveBal = balBeforeDay > 0 ? balBeforeDay : (capital > 0 ? capital : 10000);
+  const effectiveBal = Math.max(balBeforeDay, capital * 0.10);
   const maxLoss = effectiveBal * 0.05;
 
   // Loss on that specific day only
@@ -1836,8 +1879,18 @@ function updateDailyHpBar(targetKey) {
 
   document.getElementById("hp-max-label-val").textContent = "MAX -$" + fmtMoney(maxLoss);
   const statusEl = document.getElementById("hp-status-text");
-  statusEl.textContent = stateMap[state];
-  statusEl.className = "hp-status-text " + textClass[state];
+  if (statusEl) { statusEl.textContent = stateMap[state]; statusEl.className = "hp-status-text " + textClass[state]; }
+
+  // REMAINING & % USED
+  const remaining = Math.max(0, maxLoss - dayLoss);
+  const usedPct = Math.min(100, (dayLoss / maxLoss * 100)).toFixed(1);
+  const remEl = document.getElementById("hp-remaining");
+  const pctEl = document.getElementById("hp-used-pct");
+  if (remEl) {
+    remEl.textContent = state === "dead" ? "$0" : "$" + fmtMoney(remaining);
+    remEl.style.color = state === "dead" ? "#f87171" : state === "danger" ? "#fca5a5" : state === "warn" ? "#fde68a" : "#86efac";
+  }
+  if (pctEl) pctEl.textContent = usedPct + "%";
 }
 
 
@@ -1869,7 +1922,7 @@ function updateStats() {
   const wr = totalTrades>0?Math.round(wins/totalTrades*100):null;
   const pe = document.getElementById("stat-pnl");
   pe.textContent = tradeDays>0?fmt(totalPnl):"—";
-  pe.style.color = totalPnl>=0?"#2D6A4F":"#9B2335";
+  pe.style.color = totalPnl>=0?clrProfit():clrLoss();
   document.getElementById("stat-wr").textContent = wr!==null?wr+"%":"—";
   document.getElementById("stat-days").textContent = tradeDays||"—";
   document.getElementById("stat-wl").textContent = totalTrades>0?`${wins} / ${losses}`:"—";
@@ -1880,20 +1933,20 @@ function updateStats() {
     const pf = grossWin / grossLoss;
     pfEl.textContent = pf.toFixed(2);
     pfCard.className = "stat-card " + (pf >= 1.5 ? "pf-good" : pf < 1.0 ? "pf-bad" : "pf-neutral");
-    pfEl.style.color = pf >= 1.5 ? "#2D6A4F" : pf < 1.0 ? "#9B2335" : "#B8975A";
+    pfEl.style.color = pf >= 1.5 ? clrProfit() : pf < 1.0 ? clrLoss() : clrGold();
     pfSub.textContent = pf >= 1.5 ? "STRONG" : pf >= 1.0 ? "BREAKEVEN+" : "NEGATIVE EDGE";
   } else if (grossWin > 0) {
-    pfEl.textContent = "∞"; pfEl.style.color = "#2D6A4F";
+    pfEl.textContent = "∞"; pfEl.style.color = clrProfit();
     pfCard.className = "stat-card pf-good"; pfSub.textContent = "NO LOSSES";
   } else {
-    pfEl.textContent = "—"; pfCard.className = "stat-card"; pfSub.textContent = ""; pfEl.style.color = "#1A2235";
+    pfEl.textContent = "—"; pfCard.className = "stat-card"; pfSub.textContent = ""; pfEl.style.color = clrInk();
   }
   const avgWinEl = document.getElementById("stat-avg-win");
   avgWinEl.textContent = wins>0 ? fmt(winSum/wins) : "—";
-  avgWinEl.style.color = "#2D6A4F";
+  avgWinEl.style.color = clrProfit();
   const avgLossEl = document.getElementById("stat-avg-loss");
   avgLossEl.textContent = losses>0 ? fmt(lossSum/losses) : "—";
-  avgLossEl.style.color = "#9B2335";
+  avgLossEl.style.color = clrLoss();
 }
 
 const EMO_MAP = {calm:"😌",confident:"💪",fomo:"😰",revenge:"😤",fear:"😨",greedy:"🤑"};
@@ -1971,9 +2024,9 @@ function updateNetDisplay(i) {
   const netEl = document.getElementById(`net-${i}`);
   if (!netEl) return;
   const net = tradeRows[i].netPnl;
-  if (net === null) { netEl.textContent = "—"; netEl.style.color = "#1A2235"; return; }
+  if (net === null) { netEl.textContent = "—"; netEl.style.color = clrInk(); return; }
   netEl.textContent = (net >= 0 ? "+" : "") + net.toFixed(2);
-  netEl.style.color = net >= 0 ? "#2D6A4F" : "#9B2335";
+  netEl.style.color = net >= 0 ? clrProfit() : clrLoss();
 }
 
 // ── RENDER CALENDAR ──
@@ -2044,18 +2097,17 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   let html = `<div class="day-num${isToday?" is-today":""}">${d}</div>`;
   if (hasPnl) {
     const tradeCount = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 1;
-    html += `<div class="day-pnl" style="color:${pnl>=0?"#2D6A4F":"#9B2335"}">$${fmt(pnl)}</div>`;
+    html += `<div class="day-pnl" style="color:${pnl>=0?clrProfit():clrLoss()}">$${fmt(pnl)}</div>`;
     if (tradeCount>1) html += `<div class="day-trade-count">${tradeCount} trades</div>`;
     if (t.pairs) html += `<div class="day-pairs">${t.pairs}</div>`;
     if (t.tags&&t.tags.length) html += `<div class="day-tags">${t.tags.map(tg=>`<span class="day-tag">${tg}</span>`).join("")}</div>`;
     const icons = [];
     if (t.emotion) icons.push(EMO_MAP[t.emotion]||"");
-    if (t.image) icons.push("📸");
     if (t.note) icons.push("📝");
     if (icons.length) html += `<div class="day-icons">${icons.join("")}</div>`;
     html += `<div class="pnl-bar" style="background:${pnl>=0?"rgba(45,106,79,0.4)":"rgba(155,35,53,0.35)"}"></div>`;
-  } else if (t&&(t.note||t.image)) {
-    html += `<div class="day-icons">${t.image?"📸":""} ${t.note?"📝":""}</div>`;
+  } else if (t&&t.note) {
+    html += `<div class="day-icons">📝</div>`;
   }
   el.innerHTML = html;
   el.addEventListener("click", ()=>{ updateDailyHpBar(key); openModal(d,key); });
@@ -2129,7 +2181,7 @@ function renderPnlCurve(entries) {
   const lastX = px(points.length-1), firstX = px(0), zeroY = py(0).toFixed(1);
   let fillD = pathD + ` L${lastX.toFixed(1)},${zeroY} L${firstX.toFixed(1)},${zeroY} Z`;
   const isPos = cum >= 0;
-  const lineColor = isPos ? "#2D6A4F" : "#9B2335";
+  const lineColor = isPos ? clrProfit() : clrLoss();
   // Labels: first, last, min, max
   const lastPt = points[points.length-1];
   wrap.innerHTML = `
@@ -2172,7 +2224,7 @@ function renderPairBreakdown(entries) {
   const maxAbs = Math.max(...pairs.map(([,v])=>Math.abs(v.pnl)),1);
   el.innerHTML = `<div class="pair-rows">${pairs.map(([pair,d])=>{
     const pct = Math.abs(d.pnl)/maxAbs*100;
-    const color = d.pnl>=0?"#2D6A4F":"#9B2335";
+    const color = d.pnl>=0?clrProfit():clrLoss();
     const colorBg = d.pnl>=0?"rgba(45,106,79,0.2)":"rgba(155,35,53,0.15)";
     const wr = d.count>0?Math.round(d.wins/d.count*100):0;
     return `<div class="pair-row">
@@ -2202,7 +2254,7 @@ function renderEmotionAnalysis(entries) {
   el.innerHTML = `<div class="emo-rows">${order.map(emo=>{
     const d = emoMap[emo];
     const wr = Math.round(d.wins/d.total*100);
-    const color = wr>=60?"#2D6A4F":wr>=40?"#B8975A":"#9B2335";
+    const color = wr>=60?clrProfit():wr>=40?clrGold():clrLoss();
     return `<div class="emo-row">
       <div class="emo-icon">${EMO_MAP[emo]}</div>
       <div class="emo-stat">
@@ -2240,9 +2292,10 @@ function renderTagWinRate(entries) {
   el.innerHTML = `<div class="tag-wr-rows">${tags.map(([tag, d]) => {
     const total = d.wins + d.losses;
     const wr = Math.round(d.wins / total * 100);
-    const color = wr >= 60 ? "#2D6A4F" : wr >= 45 ? "#B8975A" : "#9B2335";
-    const colorBg = wr >= 60 ? "rgba(45,106,79,0.22)" : wr >= 45 ? "rgba(184,151,90,0.22)" : "rgba(155,35,53,0.16)";
-    const pnlColor = d.pnl >= 0 ? "#2D6A4F" : "#9B2335";
+    const color = wr >= 60 ? clrProfit() : wr >= 45 ? clrGold() : clrLoss();
+    const isDark = document.body.classList.contains('dark');
+    const colorBg = wr >= 60 ? (isDark?"rgba(74,222,128,0.15)":"rgba(45,106,79,0.22)") : wr >= 45 ? (isDark?"rgba(200,169,110,0.15)":"rgba(184,151,90,0.22)") : (isDark?"rgba(248,113,113,0.15)":"rgba(155,35,53,0.16)");
+    const pnlColor = d.pnl >= 0 ? clrProfit() : clrLoss();
     return `<div class="tag-wr-row">
       <div class="tag-wr-name">${tag}</div>
       <div class="tag-wr-bar-bg">
@@ -2275,15 +2328,15 @@ function renderDrawdown(entries) {
     <div class="dd-stats">
       <div class="dd-stat">
         <div class="dd-stat-label">MAX DRAWDOWN</div>
-        <div class="dd-stat-val" style="color:#9B2335">-${fmtMoney(maxDD)}</div>
+        <div class="dd-stat-val" style="color:${clrLoss()}">-${fmtMoney(maxDD)}</div>
       </div>
       <div class="dd-stat">
         <div class="dd-stat-label">MAX WIN STREAK</div>
-        <div class="dd-stat-val" style="color:#2D6A4F">${maxWin} DAYS</div>
+        <div class="dd-stat-val" style="color:${clrProfit()}">${maxWin} DAYS</div>
       </div>
       <div class="dd-stat">
         <div class="dd-stat-label">MAX LOSS STREAK</div>
-        <div class="dd-stat-val" style="color:#9B2335">${maxLoss} DAYS</div>
+        <div class="dd-stat-val" style="color:${clrLoss()}">${maxLoss} DAYS</div>
       </div>
     </div>
     <div style="font-size:10px;color:#333;letter-spacing:1px;margin-top:8px">
@@ -2292,7 +2345,7 @@ function renderDrawdown(entries) {
 }
 
 // ── TRADE MODAL ──
-let selectedTags = [], selectedEmo = "", currentImageData = null, tradeRows = [];
+let selectedTags = [], selectedEmo = "", tradeRows = [];
 const PRESET_PAIRS = [
   {val:"XAUUSD", label:"XAUUSD", sub:"Gold"},
   {val:"EURUSD", label:"EURUSD", sub:"Forex"},
@@ -2355,7 +2408,7 @@ function renderTradeRows() {
       </div>
       <div class="comm-net-row">
         <span class="comm-net-label">NET P&L</span>
-        <span class="comm-net-val" id="net-${i}" style="color:${(row.netPnl??row.pnl??0)>=0?"#2D6A4F":"#9B2335"}">${
+        <span class="comm-net-val" id="net-${i}" style="color:${(row.netPnl??row.pnl??0)>=0?clrProfit():clrLoss()}">${
           (()=>{const n=row.netPnl??row.pnl??null;return n===null?"—":((n>=0?"+":"")+n.toFixed(2));})()
         }</span>
       </div>
@@ -2428,7 +2481,7 @@ function onPnlInput(i) {
   updateNetDisplay(i);
   if(document.getElementById(`pnl-${i}`)) {
     const displayV = tradeRows[i].pnl;
-    inp.style.color=raw===""?"#1A2235":displayV>=0?"#2D6A4F":"#9B2335";
+    inp.style.color=raw===""?clrInk():displayV>=0?clrProfit():clrLoss();
   }
 }
 
@@ -2446,27 +2499,9 @@ function openModal(d, key) {
   document.querySelectorAll(".tag-btn").forEach(btn=>btn.classList.toggle("active",selectedTags.includes(btn.textContent.trim())));
   selectedEmo = t.emotion||"";
   document.querySelectorAll(".emo-btn").forEach(btn=>btn.classList.toggle("active",btn.getAttribute("onclick").includes(`'${selectedEmo}'`)&&selectedEmo!==""));
-  currentImageData = t.image||null;
-  renderImagePreview();
   document.getElementById("overlay").classList.add("show");
 }
 
-function renderImagePreview() {
-  const container=document.getElementById("img-preview-container");
-  const placeholder=document.getElementById("upload-placeholder");
-  if (currentImageData) {
-    placeholder.style.display="none";
-    container.innerHTML=`<div class="img-preview-wrap"><img class="img-preview" src="${currentImageData}" onclick="viewImage(event)" style="cursor:zoom-in"/><button class="img-remove" onclick="removeImage(event)">✕</button></div>`;
-  } else { placeholder.style.display="block"; container.innerHTML=""; }
-}
-function handleImage(e) {
-  const file=e.target.files[0]; if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{currentImageData=ev.target.result;renderImagePreview();};
-  reader.readAsDataURL(file); e.target.value="";
-}
-function removeImage(e) { e.stopPropagation(); currentImageData=null; renderImagePreview(); }
-function viewImage(e) { e.stopPropagation(); document.getElementById("img-modal-src").src=currentImageData; document.getElementById("img-modal").classList.add("show"); }
 
 function toggleTag(btn, tag) {
   const idx=selectedTags.indexOf(tag);
@@ -2509,10 +2544,10 @@ function saveTrade() {
   // Use netPnl if available, else gross pnl
   const totalPnl=validRows.reduce((s,r)=>s+(r.netPnl!==null&&r.netPnl!==undefined?r.netPnl:(r.pnl||0)),0);
   const allPairs=[...new Set(validRows.map(r=>r.pair).filter(Boolean))].join(", ");
-  if(!validRows.length&&!note&&!selectedTags.length&&!selectedEmo&&!currentImageData){
+  if(!validRows.length&&!note&&!selectedTags.length&&!selectedEmo){
     delete trades[selectedKey];
   } else {
-    trades[selectedKey]={pnl:validRows.length?totalPnl:null,pairs:allPairs,tradeList:tradeRows.map(r=>({...r})),note,tags:[...selectedTags],emotion:selectedEmo,image:currentImageData};
+    trades[selectedKey]={pnl:validRows.length?totalPnl:null,pairs:allPairs,tradeList:tradeRows.map(r=>({...r})),note,tags:[...selectedTags],emotion:selectedEmo};
   }
   save(); haptic('success'); renderCalendar(); updateDailyHpBar(selectedKey); closeModal();
 }
@@ -2635,7 +2670,7 @@ function importCSV(e) {
       for(const[date,data]of Object.entries(dateMap)){
         const meta=data.meta||{},list=data.tradeList;
         const totalPnl=meta.totalPnl!==""&&meta.totalPnl!=null?Number(meta.totalPnl):null;
-        trades[date]={pnl:totalPnl,pairs:meta.pairs||"",tags:meta.tags?meta.tags.split("|").filter(t=>t):[],emotion:meta.emotion||"",note:meta.note||"",image:trades[date]?.image||null,tradeList:list.length>0?list:(totalPnl!==null?[{pair:meta.pairs||"",pnl:totalPnl,wl:totalPnl>=0?"win":"loss"}]:[])};
+        trades[date]={pnl:totalPnl,pairs:meta.pairs||"",tags:meta.tags?meta.tags.split("|").filter(t=>t):[],emotion:meta.emotion||"",note:meta.note||"",tradeList:list.length>0?list:(totalPnl!==null?[{pair:meta.pairs||"",pnl:totalPnl,wl:totalPnl>=0?"win":"loss"}]:[])};
         imported++;
       }
       save(); renderCalendar();
