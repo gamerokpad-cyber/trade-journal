@@ -1106,15 +1106,16 @@ body {
     <div class="fb-login-desc">
       บันทึกข้อมูลบนคลาวด์<br>ใช้ได้ทุกอุปกรณ์ ข้อมูลไม่หาย
     </div>
-    <button class="fb-google-btn" onclick="fbSignIn()">
+    <button class="fb-google-btn" id="fb-signin-btn" onclick="fbSignIn()">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
-      SIGN IN WITH GOOGLE
+      <span id="fb-signin-label">SIGN IN WITH GOOGLE</span>
     </button>
+    <div id="fb-login-error" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(155,35,53,0.1);border:1px solid rgba(155,35,53,0.3);border-radius:8px;font-size:10px;color:#9B2335;letter-spacing:1px;word-break:break-all;line-height:1.6;text-align:left;"></div>
     <div class="fb-login-note">
       ข้อมูลของคุณถูกเก็บในบัญชี Firebase ส่วนตัว<br>
       ไม่มีการแชร์ข้อมูลกับผู้อื่น
@@ -2786,23 +2787,39 @@ window.fbUser = null;
 let fbUser = null;
 let fbSyncTimer = null;
 
+function showLoginError(msg) {
+  const el = document.getElementById('fb-login-error');
+  if (el) { el.style.display = 'block'; el.textContent = msg; }
+  const btn = document.getElementById('fb-signin-btn');
+  const lbl = document.getElementById('fb-signin-label');
+  if (btn) btn.disabled = false;
+  if (lbl) lbl.textContent = 'SIGN IN WITH GOOGLE';
+}
+
 function fbSignIn() {
+  if (!window._fb) { showLoginError('Firebase ยังโหลดไม่เสร็จ — รอสักครู่แล้วลองใหม่'); return; }
   const { auth, provider, signInWithPopup, signInWithRedirect } = window._fb;
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isPwa = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (isMobile && !isPwa) {
-    // มือถือ browser ปกติ → redirect (popup ถูก COOP block ไม่ยอม close)
-    signInWithRedirect(auth, provider);
-    return;
-  }
-  // desktop หรือ PWA → popup
+  const btn = document.getElementById('fb-signin-btn');
+  const lbl = document.getElementById('fb-signin-label');
+  const errEl = document.getElementById('fb-login-error');
+  if (btn) btn.disabled = true;
+  if (lbl) lbl.textContent = 'SIGNING IN...';
+  if (errEl) errEl.style.display = 'none';
+
   signInWithPopup(auth, provider).catch(err => {
-    if (err.code === 'auth/popup-blocked') {
+    if (btn) btn.disabled = false;
+    if (lbl) lbl.textContent = 'SIGN IN WITH GOOGLE';
+    if (err.code === 'auth/popup-blocked' ||
+        err.code === 'auth/operation-not-supported-in-this-environment' ||
+        err.code === 'auth/web-storage-unsupported') {
+      // popup ถูก block — ลอง redirect แทน
+      if (lbl) lbl.textContent = 'REDIRECTING...';
+      if (btn) btn.disabled = true;
       signInWithRedirect(auth, provider);
     } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-      // ผู้ใช้ปิด popup เอง — ไม่ต้องทำอะไร
+      // ผู้ใช้ปิด popup เอง
     } else {
-      alert('Login ไม่สำเร็จ: ' + err.message);
+      showLoginError('ERROR: ' + err.code + '\n' + err.message);
     }
   });
 }
