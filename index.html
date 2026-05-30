@@ -2446,6 +2446,7 @@ function renderTradeRows() {
           ${['SMC','FVG','Day Trade','Scalping'].map(tag => `<button type="button" onclick="toggleTradeTag(${i},'${tag}')" style="padding:5px 12px;border-radius:20px;border:1px solid ${(row.tags||[]).includes(tag)?'var(--gold)':'var(--ink-ghost)'};background:${(row.tags||[]).includes(tag)?'var(--gold-pale)':'transparent'};color:${(row.tags||[]).includes(tag)?'var(--navy)':'var(--ink-faint)'};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;font-weight:${(row.tags||[]).includes(tag)?'700':'400'}">${tag}</button>`).join('')}
         </div>
       </div>`;
+    container.appendChild(div);
   });
 }
 
