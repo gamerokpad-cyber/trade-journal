@@ -2803,16 +2803,27 @@ function fbSignIn() {
   const lbl = document.getElementById('fb-signin-label');
   const errEl = document.getElementById('fb-login-error');
   if (btn) btn.disabled = true;
-  if (lbl) lbl.textContent = 'SIGNING IN...';
   if (errEl) errEl.style.display = 'none';
 
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  if (isIOS || isAndroid) {
+    // มือถือ: บังคับ redirect — popup บน iOS Safari hang เสมอ
+    if (lbl) lbl.textContent = 'REDIRECTING...';
+    signInWithRedirect(auth, provider).catch(err => {
+      showLoginError('REDIRECT ERROR: ' + err.code + '\n' + err.message);
+    });
+    return;
+  }
+
+  // Desktop: ใช้ popup
+  if (lbl) lbl.textContent = 'SIGNING IN...';
   signInWithPopup(auth, provider).catch(err => {
     if (btn) btn.disabled = false;
     if (lbl) lbl.textContent = 'SIGN IN WITH GOOGLE';
     if (err.code === 'auth/popup-blocked' ||
-        err.code === 'auth/operation-not-supported-in-this-environment' ||
-        err.code === 'auth/web-storage-unsupported') {
-      // popup ถูก block — ลอง redirect แทน
+        err.code === 'auth/operation-not-supported-in-this-environment') {
       if (lbl) lbl.textContent = 'REDIRECTING...';
       if (btn) btn.disabled = true;
       signInWithRedirect(auth, provider);
@@ -2958,7 +2969,10 @@ function initFirebaseAuth() {
 
   // Handle redirect result (กรณีที่ใช้ signInWithRedirect)
   getRedirectResult(auth).catch(err => {
-    if (err && err.code) console.error('Redirect result error:', err.message);
+    if (err && err.code) {
+      console.error('Redirect result error:', err.message);
+      showLoginError('REDIRECT ERROR: ' + err.code + '\n' + err.message);
+    }
   });
 
   onAuthStateChanged(auth, async (user) => {
