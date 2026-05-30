@@ -51,7 +51,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc }
     from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
@@ -69,10 +69,10 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+  const googleProvider = new GoogleAuthProvider();
 
   // expose to global so non-module scripts can call
-  window._fb = { auth, db, provider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, getDoc, setDoc, collection, getDocs, deleteDoc };
+  window._fb = { auth, db, googleProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, doc, getDoc, setDoc, collection, getDocs, deleteDoc };
 </script>
 
 <!-- Preconnect fonts -->
@@ -1102,24 +1102,41 @@ body {
   <div class="fb-login-logo">TRADELOG</div>
   <div class="fb-login-sub">DAILY TRADING JOURNAL</div>
   <div class="fb-login-card">
-    <div class="fb-login-title">SIGN IN</div>
-    <div class="fb-login-desc">
-      บันทึกข้อมูลบนคลาวด์<br>ใช้ได้ทุกอุปกรณ์ ข้อมูลไม่หาย
+    <div class="fb-login-title" id="fb-login-title">SIGN IN</div>
+    <div class="fb-login-desc">บันทึกข้อมูลบนคลาวด์<br>ใช้ได้ทุกอุปกรณ์ ข้อมูลไม่หาย</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <input type="email" id="fb-email-inp" placeholder="Email (Gmail ได้เลย)" autocomplete="email"
+        style="padding:13px 16px;border-radius:10px;border:1px solid var(--ink-ghost);background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;font-size:13px;outline:none;width:100%;"
+        onkeydown="if(event.key==='Enter')document.getElementById('fb-pass-inp').focus()"/>
+      <input type="password" id="fb-pass-inp" placeholder="Password" autocomplete="current-password"
+        style="padding:13px 16px;border-radius:10px;border:1px solid var(--ink-ghost);background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;font-size:13px;outline:none;width:100%;letter-spacing:2px;"
+        onkeydown="if(event.key==='Enter')fbSignIn()"/>
     </div>
-    <button class="fb-google-btn" id="fb-signin-btn" onclick="fbSignIn()">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      <span id="fb-signin-label">SIGN IN WITH GOOGLE</span>
+    <button class="fb-google-btn" id="fb-signin-btn" onclick="fbSignIn()" style="margin-top:14px;justify-content:center;">
+      <span id="fb-signin-label">SIGN IN</span>
     </button>
-    <div id="fb-login-error" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(155,35,53,0.1);border:1px solid rgba(155,35,53,0.3);border-radius:8px;font-size:10px;color:#9B2335;letter-spacing:1px;word-break:break-all;line-height:1.6;text-align:left;"></div>
-    <div class="fb-login-note">
-      ข้อมูลของคุณถูกเก็บในบัญชี Firebase ส่วนตัว<br>
-      ไม่มีการแชร์ข้อมูลกับผู้อื่น
+    <button onclick="fbToggleRegister()" id="fb-toggle-btn"
+      style="margin-top:8px;background:transparent;border:none;color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;padding:8px;width:100%;">
+      ยังไม่มีบัญชี? <span style="color:var(--gold);text-decoration:underline;">สมัครใหม่</span>
+    </button>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+      <div style="flex:1;height:1px;background:var(--ink-ghost);"></div>
+      <span style="font-size:10px;color:var(--ink-faint);letter-spacing:1.5px;">หรือ</span>
+      <div style="flex:1;height:1px;background:var(--ink-ghost);"></div>
     </div>
+    <button onclick="fbSignInAnonymous()"
+      style="margin-top:4px;background:transparent;border:1px solid var(--ink-ghost);border-radius:10px;color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;cursor:pointer;padding:12px;width:100%;transition:all 0.15s;"
+      onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--ink-ghost)'">
+      👤 ลองใช้โดยไม่สมัคร
+    </button>
+    <button onclick="fbSignInGoogle()"
+      style="margin-top:6px;background:transparent;border:1px solid var(--ink-ghost);border-radius:10px;color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;cursor:pointer;padding:12px;width:100%;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;"
+      onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--ink-ghost)'">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      SIGN IN WITH GOOGLE
+    </button>
+    <div id="fb-login-error" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(155,35,53,0.1);border:1px solid rgba(155,35,53,0.3);border-radius:8px;font-size:11px;color:#9B2335;letter-spacing:0.5px;line-height:1.6;text-align:left;white-space:pre-line;"></div>
+    <div class="fb-login-note" style="margin-top:12px;">ข้อมูลของคุณถูกเก็บในบัญชี Firebase ส่วนตัว<br>ไม่มีการแชร์ข้อมูลกับผู้อื่น</div>
   </div>
 </div>
 
@@ -1461,7 +1478,8 @@ body {
 <script>
 // ── ANIMATED COUNTER ──
 function animateCounter(el, targetText, duration = 800) {
-  if (!el || !document.body.classList.contains('dark')) { el.textContent = targetText; return; }
+  if (!el) return;
+  if (!document.body.classList.contains('dark')) { el.textContent = targetText; return; }
   // Extract number from text like "+1,652.55" or "-$332.63" or "33%"
   const raw = targetText.replace(/[^0-9.\-]/g, '');
   const target = parseFloat(raw);
@@ -1493,7 +1511,7 @@ const DARK_KEY = "trading-journal-dark";
 function toggleDarkMode() {
   const isDark = document.body.classList.toggle("dark");
   localStorage.setItem(DARK_KEY, isDark ? "1" : "0");
-  document.getElementById("btn-darkmode").textContent = isDark ? "☀️" : "🌙";
+  { const _tc1 = document.getElementById("btn-darkmode"); if(_tc1) _tc1.textContent = isDark ? "☀️" : "🌙"; }
 }
 (function initDarkMode() {
   const saved = localStorage.getItem(DARK_KEY);
@@ -1527,6 +1545,8 @@ function switchTabNav(name) {
 </script>
 
 <script>
+
+
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const TRADER_KEY  = "trading-journal-trader";
 const WEEKEND_KEY = "trading-journal-weekend";
@@ -1673,18 +1693,18 @@ function renderJournalStrip() {
   strip.innerHTML = "";
   journals.forEach(j => {
     const chip = document.createElement("button");
-    chip.className = "journal-chip" + (j.id === activeJournalId ? " active" : "");
+    if(chip) chip.className = "journal-chip" + (j.id === activeJournalId ? " active" : "");
     chip.innerHTML = `<span class="journal-chip-dot"></span>${j.name}`;
     chip.onclick = () => { if (j.id !== activeJournalId) switchJournal(j.id); };
     strip.appendChild(chip);
   });
   // Add "+" button
   const addBtn = document.createElement("button");
-  addBtn.className = "journal-add-btn";
+  if(addBtn) addBtn.className = "journal-add-btn";
   addBtn.title = "Manage journals";
   addBtn.innerHTML = "⋯";
-  addBtn.style.fontSize = "16px";
-  addBtn.style.letterSpacing = "2px";
+  if(addBtn) addBtn.style.fontSize = "16px";
+  if(addBtn) addBtn.style.letterSpacing = "2px";
   addBtn.onclick = openJM;
   strip.appendChild(addBtn);
 }
@@ -1703,7 +1723,7 @@ function renderJMList() {
   journals.forEach(j => {
     const isActive = j.id === activeJournalId;
     const item = document.createElement("div");
-    item.className = "jm-item" + (isActive ? " active-journal" : "");
+    if(item) item.className = "jm-item" + (isActive ? " active-journal" : "");
     item.innerHTML = `
       <span style="font-size:14px">${isActive ? "📖" : "📒"}</span>
       <input class="jm-item-name" value="${j.name}" maxlength="30"
@@ -1797,12 +1817,13 @@ function syncCapitalFromCal() {
 }
 
 function updateBalanceDisplay() {
+  if (!document.getElementById("total-pnl-all")) return; // DOM ยังไม่พร้อม
   const total = totalPnLAll();
   const balance = capital + total;
   // Analysis tab
   const totalEl = document.getElementById("total-pnl-all");
   const totalTxt = fmt(total) || "—";
-  totalEl.style.color = total>=0 ? clrProfit() : clrLoss();
+  if(totalEl) totalEl.style.color = total>=0 ? clrProfit() : clrLoss();
   animateCounter(totalEl, totalTxt);
   const balEl = document.getElementById("current-balance");
   const balTxt = capital>0 || total!==0 ? fmtMoney(balance) : "—";
@@ -1811,14 +1832,14 @@ function updateBalanceDisplay() {
   if (capital > 0) {
     const pct = (total/capital)*100;
     pctEl.textContent = (pct>=0?"▲ +":"▼ ") + pct.toFixed(2) + "%";
-    pctEl.style.color = pct>=0 ? clrProfit() : clrLoss();
+    if(pctEl) pctEl.style.color = pct>=0 ? clrProfit() : clrLoss();
   } else { pctEl.textContent = ""; }
   // Calendar strip
   const calPnlEl = document.getElementById("cal-total-pnl");
   const calBalEl = document.getElementById("cal-balance");
   if (calPnlEl) {
     calPnlEl.textContent = fmt(total) || "—";
-    calPnlEl.className = "cal-cap-value" + (total>0?" profit-c":total<0?" loss-c":"");
+    if(calPnlEl) calPnlEl.className = "cal-cap-value" + (total>0?" profit-c":total<0?" loss-c":"");
   }
   if (calBalEl) {
     calBalEl.textContent = capital>0||total!==0 ? fmtMoney(balance) : "—";
@@ -1847,23 +1868,20 @@ function updateBalanceDisplay() {
 }
 
 function updateDailyHpBar(targetKey) {
-  // targetKey = "YYYY-MM-DD" of the day to show; defaults to today
+  if (!document.getElementById("daily-hp-wrap")) return; // DOM ยังไม่พร้อม
   const dateStr = targetKey || dayKey(today.getFullYear(), today.getMonth(), today.getDate());
   const wrap = document.getElementById("daily-hp-wrap");
   if (!wrap) return;
 
   const total = totalPnLAll();
   const balance = capital > 0 ? capital + total : 0;
-  wrap.style.display = "block";
+  if(wrap) wrap.style.display = "block";
   if (capital <= 0) {
-    document.getElementById("hp-date-label").textContent = "SET CAPITAL TO ACTIVATE";
-    document.getElementById("hp-bar-fill").className = "hp-bar-fill hp-safe";
-    document.getElementById("hp-bar-fill").style.width = "100%";
-    document.getElementById("hp-loss-today").textContent = "—";
-    document.getElementById("hp-loss-today").className = "hp-loss-today hp-safe-text";
-    document.getElementById("hp-max-label-val").textContent = "MAX —";
-    document.getElementById("hp-status-text").textContent = "—";
-    document.getElementById("hp-status-text").className = "hp-status-text hp-safe-text";
+    { const _tc2 = document.getElementById("hp-date-label"); if(_tc2) _tc2.textContent = "SET CAPITAL TO ACTIVATE"; }
+    { const _bf1 = document.getElementById("hp-bar-fill"); if(_bf1) { _bf1.className = "hp-bar-fill hp-safe"; _bf1.style.width = "100%"; } }
+    { const _tc3 = document.getElementById("hp-loss-today"); if(_tc3) { _tc3.textContent = "—"; _tc3.className = "hp-loss-today hp-safe-text"; } }
+    { const _tc4 = document.getElementById("hp-max-label-val"); if(_tc4) _tc4.textContent = "MAX —"; }
+    { const _tc5 = document.getElementById("hp-status-text"); if(_tc5) { _tc5.textContent = "—"; _tc5.className = "hp-status-text hp-safe-text"; } }
     return;
   }
 
@@ -1898,8 +1916,8 @@ function updateDailyHpBar(targetKey) {
   const fillClass = { safe: "hp-safe", warn: "hp-warn", danger: "hp-danger", dead: "hp-dead" };
 
   const fill = document.getElementById("hp-bar-fill");
-  fill.className = "hp-bar-fill " + fillClass[state];
-  fill.style.width = state === "dead" ? "100%" : hpPct + "%";
+  if(fill) fill.className = "hp-bar-fill " + fillClass[state];
+  if(fill) fill.style.width = state === "dead" ? "100%" : hpPct + "%";
 
   // Segments (5 divs = 5 × 20% markers)
   const segs = document.getElementById("hp-bar-segs");
@@ -1907,16 +1925,14 @@ function updateDailyHpBar(targetKey) {
 
   // Date label
   const isToday = dateStr === dayKey(today.getFullYear(), today.getMonth(), today.getDate());
-  document.getElementById("hp-date-label").textContent = isToday
-    ? "TODAY · " + dateStr.slice(5).replace("-", "/")
-    : dateStr.slice(5).replace("-", "/");
+  { const _dl = document.getElementById("hp-date-label"); if(_dl) _dl.textContent = isToday ? "TODAY · " + dateStr.slice(5).replace("-", "/") : dateStr.slice(5).replace("-", "/"); }
 
   // Loss display
   const lossEl = document.getElementById("hp-loss-today");
-  lossEl.textContent = dayPnl < 0 ? "-$" + fmtMoney(dayLoss) : (dayPnl > 0 ? "+$" + fmtMoney(dayPnl) : "$0");
-  lossEl.className = "hp-loss-today " + (dayPnl > 0 ? "hp-safe-text" : textClass[state]);
+  if(lossEl) lossEl.textContent = dayPnl < 0 ? "-$" + fmtMoney(dayLoss) : (dayPnl > 0 ? "+$" + fmtMoney(dayPnl) : "$0");
+  if(lossEl) lossEl.className = "hp-loss-today " + (dayPnl > 0 ? "hp-safe-text" : textClass[state]);
 
-  document.getElementById("hp-max-label-val").textContent = "MAX -$" + fmtMoney(maxLoss);
+  { const _tc6 = document.getElementById("hp-max-label-val"); if(_tc6) _tc6.textContent = "MAX -$" + fmtMoney(maxLoss); }
   const statusEl = document.getElementById("hp-status-text");
   if (statusEl) { statusEl.textContent = stateMap[state]; statusEl.className = "hp-status-text " + textClass[state]; }
 
@@ -1927,7 +1943,7 @@ function updateDailyHpBar(targetKey) {
   const pctEl = document.getElementById("hp-used-pct");
   if (remEl) {
     remEl.textContent = state === "dead" ? "$0" : "$" + fmtMoney(remaining);
-    remEl.style.color = state === "dead" ? "#f87171" : state === "danger" ? "#fca5a5" : state === "warn" ? "#fde68a" : "#86efac";
+    if(remEl) remEl.style.color = state === "dead" ? "#f87171" : state === "danger" ? "#fca5a5" : state === "warn" ? "#fde68a" : "#86efac";
   }
   if (pctEl) pctEl.textContent = usedPct + "%";
 }
@@ -1938,6 +1954,7 @@ function dayKey(y, m, d) {
 }
 
 function updateStats() {
+  if (!document.getElementById("stat-pnl")) return; // ยังไม่ได้ login หรือ DOM ยังไม่พร้อม
   const mk = `${curYear}-${String(curMonth+1).padStart(2,"0")}`;
   const dayEntries = Object.entries(trades).filter(([k])=>k.startsWith(mk)).map(([,v])=>v);
   let wins=0, losses=0, totalPnl=0, tradeDays=0;
@@ -1961,32 +1978,35 @@ function updateStats() {
   const wr = totalTrades>0?Math.round(wins/totalTrades*100):null;
   const pe = document.getElementById("stat-pnl");
   const peTxt = tradeDays>0?fmt(totalPnl):"—";
-  pe.style.color = totalPnl>=0?clrProfit():clrLoss();
+  if(pe) pe.style.color = totalPnl>=0?clrProfit():clrLoss();
   animateCounter(pe, peTxt);
   const wrEl = document.getElementById("stat-wr");
   animateCounter(wrEl, wr!==null?wr+"%":"—");
-  document.getElementById("stat-days").textContent = tradeDays||"—";
-  document.getElementById("stat-wl").textContent = totalTrades>0?`${wins} / ${losses}`:"—";
+  { const _tc7 = document.getElementById("stat-days"); if(_tc7) _tc7.textContent = tradeDays||"—"; }
+  { const _swl = document.getElementById("stat-wl"); if(_swl) _swl.textContent = totalTrades>0?`${wins} / ${losses}`:"—"; }
   const pfEl = document.getElementById("stat-pf");
   const pfCard = document.getElementById("pf-card");
   const pfSub = document.getElementById("stat-pf-sub");
   if (grossLoss > 0) {
     const pf = grossWin / grossLoss;
     pfEl.textContent = pf.toFixed(2);
-    pfCard.className = "stat-card " + (pf >= 1.5 ? "pf-good" : pf < 1.0 ? "pf-bad" : "pf-neutral");
-    pfEl.style.color = pf >= 1.5 ? clrProfit() : pf < 1.0 ? clrLoss() : clrGold();
-    pfSub.textContent = pf >= 1.5 ? "STRONG" : pf >= 1.0 ? "BREAKEVEN+" : "NEGATIVE EDGE";
+    if(pfCard) pfCard.className = "stat-card " + (pf >= 1.5 ? "pf-good" : pf < 1.0 ? "pf-bad" : "pf-neutral");
+    if(pfEl) pfEl.style.color = pf >= 1.5 ? clrProfit() : pf < 1.0 ? clrLoss() : clrGold();
+    if(pfSub) pfSub.textContent = pf >= 1.5 ? "STRONG" : pf >= 1.0 ? "BREAKEVEN+" : "NEGATIVE EDGE";
   } else if (grossWin > 0) {
-    pfEl.textContent = "∞"; pfEl.style.color = clrProfit();
-    pfCard.className = "stat-card pf-good"; pfSub.textContent = "NO LOSSES";
+    if(pfEl) { pfEl.textContent = "∞"; pfEl.style.color = clrProfit(); }
+    if(pfCard) pfCard.className = "stat-card pf-good";
+    if(pfSub) pfSub.textContent = "NO LOSSES";
   } else {
-    pfEl.textContent = "—"; pfCard.className = "stat-card"; pfSub.textContent = ""; pfEl.style.color = clrInk();
+    if(pfEl) { pfEl.textContent = "—"; pfEl.style.color = clrInk(); }
+    if(pfCard) pfCard.className = "stat-card";
+    if(pfSub) pfSub.textContent = "";
   }
   const avgWinEl = document.getElementById("stat-avg-win");
-  avgWinEl.style.color = clrProfit();
+  if(avgWinEl) avgWinEl.style.color = clrProfit();
   animateCounter(avgWinEl, wins>0 ? fmt(winSum/wins) : "—");
   const avgLossEl = document.getElementById("stat-avg-loss");
-  avgLossEl.style.color = clrLoss();
+  if(avgLossEl) avgLossEl.style.color = clrLoss();
   animateCounter(avgLossEl, losses>0 ? fmt(lossSum/losses) : "—");
 }
 
@@ -2018,11 +2038,11 @@ function updateCommBadge() {
   if (!badge) return;
   if (commRate > 0) {
     badge.textContent = "ON";
-    badge.className = "comm-rate-badge on";
+    if(badge) badge.className = "comm-rate-badge on";
     strip.classList.add("active");
   } else {
     badge.textContent = "OFF";
-    badge.className = "comm-rate-badge";
+    if(badge) badge.className = "comm-rate-badge";
     strip.classList.remove("active");
   }
 }
@@ -2067,12 +2087,13 @@ function updateNetDisplay(i) {
   const net = tradeRows[i].netPnl;
   if (net === null) { netEl.textContent = "—"; netEl.style.color = clrInk(); return; }
   netEl.textContent = (net >= 0 ? "+" : "") + net.toFixed(2);
-  netEl.style.color = net >= 0 ? clrProfit() : clrLoss();
+  if(netEl) netEl.style.color = net >= 0 ? clrProfit() : clrLoss();
 }
 
 // ── RENDER CALENDAR ──
 function renderCalendar() {
-  document.getElementById("nav-title").textContent = `${MONTHS[curMonth].toUpperCase()} ${curYear}`;
+  if (!document.getElementById("nav-title")) return; // DOM ยังไม่พร้อม
+  { const _nt = document.getElementById("nav-title"); if(_nt) _nt.textContent = `${MONTHS[curMonth].toUpperCase()} ${curYear}`; }
   const cal = document.getElementById("calendar");
   const hdrs = document.getElementById("day-headers-container");
   cal.innerHTML = "";
@@ -2081,14 +2102,14 @@ function renderCalendar() {
   document.getElementById("btn-weekend").classList.toggle("active", showWeekend);
 
   const cols = showWeekend ? 7 : 5;
-  cal.className = showWeekend ? "calendar-7" : "calendar-5";
+  if(cal) cal.className = showWeekend ? "calendar-7" : "calendar-5";
 
   // Headers
   if (showWeekend) {
-    hdrs.className = "day-headers-7";
+    if(hdrs) hdrs.className = "day-headers-7";
     hdrs.innerHTML = `<div class="day-header weekend">Sun</div><div class="day-header">Mon</div><div class="day-header">Tue</div><div class="day-header">Wed</div><div class="day-header">Thu</div><div class="day-header">Fri</div><div class="day-header weekend">Sat</div>`;
   } else {
-    hdrs.className = "day-headers-5";
+    if(hdrs) hdrs.className = "day-headers-5";
     hdrs.innerHTML = `<div class="day-header">Mon</div><div class="day-header">Tue</div><div class="day-header">Wed</div><div class="day-header">Thu</div><div class="day-header">Fri</div>`;
   }
 
@@ -2134,7 +2155,7 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   if (isWeekend && !hasPnl) cls += " weekend-cell";
   else if (pnl!==null) cls += pnl>=0?" profit":" loss";
   if (isToday) cls += " today";
-  el.className = cls;
+  if(el) el.className = cls;
   let html = `<div class="day-num${isToday?" is-today":""}">${d}</div>`;
   if (hasPnl) {
     const tradeCount = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 1;
@@ -2159,7 +2180,7 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
 function setAnalysisPeriod(period, btn) {
   analysisPeriod = period;
   document.querySelectorAll(".period-btn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+  if(btn) btn.classList.add("active");
   renderAnalysis();
 }
 
@@ -2179,7 +2200,8 @@ function renderAnalysis() {
   const entries = getAnalysisEntries();
   if (!entries.length) {
     ["pnl-curve-wrap","pair-breakdown","emotion-analysis","tag-winrate","drawdown-section"].forEach(id=>{
-      document.getElementById(id).innerHTML = `<div class="no-data">NO DATA YET</div>`;
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div class="no-data">NO DATA YET</div>`;
     });
     return;
   }
@@ -2404,7 +2426,7 @@ function renderTradeRows() {
     const selVal = isCustom ? "__custom__" : (row.pair||"");
     const pnlClass = row.wl==="win" ? "win" : row.wl==="loss" ? "loss" : "";
     const div = document.createElement("div");
-    div.className = "trade-row";
+    if(div) div.className = "trade-row";
 
     // Build pair pills HTML
     const pillsHTML = PRESET_PAIRS.map(p => {
@@ -2522,7 +2544,7 @@ function onPnlInput(i) {
   updateNetDisplay(i);
   if(document.getElementById(`pnl-${i}`)) {
     const displayV = tradeRows[i].pnl;
-    inp.style.color=raw===""?clrInk():displayV>=0?clrProfit():clrLoss();
+    if(inp) inp.style.color=raw===""?clrInk():displayV>=0?clrProfit():clrLoss();
   }
 }
 
@@ -2530,7 +2552,7 @@ function openModal(d, key) {
   haptic('light');
   selectedKey = key;
   const t = trades[key]||{};
-  document.getElementById("modal-title").textContent = `${MONTHS[curMonth]} ${d}, ${curYear}`;
+  { const _mt = document.getElementById("modal-title"); if(_mt) _mt.textContent = `${MONTHS[curMonth]} ${d}, ${curYear}`; }
   document.getElementById("inp-note").value = t.note||"";
   if (t.tradeList&&t.tradeList.length>0) tradeRows=t.tradeList.map(r=>({...r}));
   else if (t.pnl!==null&&t.pnl!==undefined&&t.pnl!=="") tradeRows=[{pair:t.pairs||"",pnl:Number(t.pnl),wl:Number(t.pnl)>=0?"win":"loss"}];
@@ -2556,7 +2578,7 @@ function addCustomTag() {
   document.querySelectorAll(".tag-btn").forEach(b=>{if(b.textContent.trim()===tag)existing=b;});
   if(existing){if(!selectedTags.includes(tag))toggleTag(existing,tag);inp.value="";return;}
   const btn=document.createElement("button");
-  btn.className="tag-btn active"; btn.textContent=tag;
+  if(btn) btn.className="tag-btn active"; btn.textContent=tag;
   btn.onclick=function(){toggleTag(this,tag);};
   document.getElementById("tags-grid").appendChild(btn);
   if(!selectedTags.includes(tag))selectedTags.push(tag);
@@ -2616,8 +2638,8 @@ function changeMonth(dir) {
     if (curMonth > 11) { curMonth = 0;  curYear++; }
 
     // Remove out, disable transition briefly so we can reset position
-    cal.style.transition  = 'none';
-    hdrs.style.transition = 'none';
+    if(cal) cal.style.transition  = 'none';
+    if(hdrs) hdrs.style.transition = 'none';
     cal.classList.remove(outClass);
     hdrs.classList.remove(outClass);
 
@@ -2625,8 +2647,8 @@ function changeMonth(dir) {
     cal.getBoundingClientRect();
 
     // Re-enable & render
-    cal.style.transition  = '';
-    hdrs.style.transition = '';
+    if(cal) cal.style.transition  = '';
+    if(hdrs) hdrs.style.transition = '';
 
     renderCalendar();
 
@@ -2725,14 +2747,17 @@ function importCSV(e) {
 }
 
 // ── INIT ──
+document.addEventListener('DOMContentLoaded', function() {
 load();
 loadCommRate();
 curYear=today.getFullYear();
 curMonth=today.getMonth();
 if(capital>0){ const el=document.getElementById("inp-capital"); if(el) el.value=capital; }
-document.getElementById("btn-weekend").classList.toggle("active",showWeekend);
+const _btnWeekend = document.getElementById("btn-weekend");
+if(_btnWeekend) _btnWeekend.classList.toggle("active",showWeekend);
 renderJournalStrip();
 renderCalendar();
+});
 
 // ── SWIPE TO CHANGE MONTH (calendar tab) ──
 (function() {
@@ -2793,45 +2818,87 @@ function showLoginError(msg) {
   const btn = document.getElementById('fb-signin-btn');
   const lbl = document.getElementById('fb-signin-label');
   if (btn) btn.disabled = false;
-  if (lbl) lbl.textContent = 'SIGN IN WITH GOOGLE';
+  if (lbl) lbl.textContent = fbIsRegisterMode ? 'CREATE ACCOUNT' : 'SIGN IN';
+}
+
+function fbSignInGoogle() {
+  if (!window._fb) { showLoginError('Firebase ยังโหลดไม่เสร็จ — รอสักครู่แล้วลองใหม่'); return; }
+  const { auth, googleProvider, signInWithPopup } = window._fb;
+  const errEl = document.getElementById('fb-login-error');
+  if (errEl) errEl.style.display = 'none';
+  signInWithPopup(auth, googleProvider).catch(err => {
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    if (err.code === 'auth/popup-blocked') {
+      showLoginError('Browser บล็อก Popup\nกรุณาอนุญาต popup แล้วลองใหม่');
+      return;
+    }
+    showLoginError('ERROR: ' + err.code);
+  });
+}
+
+
+function fbSignInAnonymous() {
+  if (!window._fb) { showLoginError('Firebase ยังโหลดไม่เสร็จ — รอสักครู่แล้วลองใหม่'); return; }
+  const { auth, signInAnonymously } = window._fb;
+  const errEl = document.getElementById('fb-login-error');
+  if (errEl) errEl.style.display = 'none';
+  signInAnonymously(auth).catch(err => {
+    showLoginError(err.code === 'auth/operation-not-allowed'
+      ? 'กรุณา Enable Anonymous ใน Firebase Console ก่อน'
+      : 'ERROR: ' + err.code);
+  });
+}
+
+
+
+let fbIsRegisterMode = false;
+
+function fbToggleRegister() {
+  fbIsRegisterMode = !fbIsRegisterMode;
+  { const _tc8 = document.getElementById('fb-login-title'); if(_tc8) _tc8.textContent = fbIsRegisterMode ? 'REGISTER' : 'SIGN IN'; }
+  { const _tc9 = document.getElementById('fb-signin-label'); if(_tc9) _tc9.textContent = fbIsRegisterMode ? 'CREATE ACCOUNT' : 'SIGN IN'; }
+  document.getElementById('fb-toggle-btn').innerHTML = fbIsRegisterMode
+    ? 'มีบัญชีแล้ว? <span style="color:var(--gold);text-decoration:underline;">เข้าสู่ระบบ</span>'
+    : 'ยังไม่มีบัญชี? <span style="color:var(--gold);text-decoration:underline;">สมัครใหม่</span>';
+  const errEl = document.getElementById('fb-login-error');
+  if (errEl) errEl.style.display = 'none';
 }
 
 function fbSignIn() {
   if (!window._fb) { showLoginError('Firebase ยังโหลดไม่เสร็จ — รอสักครู่แล้วลองใหม่'); return; }
-  const { auth, provider, signInWithPopup, signInWithRedirect } = window._fb;
-  const btn = document.getElementById('fb-signin-btn');
-  const lbl = document.getElementById('fb-signin-label');
+  const { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = window._fb;
+  const email = (document.getElementById('fb-email-inp').value || '').trim();
+  const pass  = (document.getElementById('fb-pass-inp').value || '');
+  const btn   = document.getElementById('fb-signin-btn');
+  const lbl   = document.getElementById('fb-signin-label');
   const errEl = document.getElementById('fb-login-error');
+
+  if (!email) { showLoginError('กรุณาใส่ Email'); return; }
+  if (!pass)  { showLoginError('กรุณาใส่ Password'); return; }
+  if (fbIsRegisterMode && pass.length < 6) { showLoginError('Password ต้องมีอย่างน้อย 6 ตัวอักษร'); return; }
+
   if (btn) btn.disabled = true;
   if (errEl) errEl.style.display = 'none';
+  if (lbl) lbl.textContent = fbIsRegisterMode ? 'CREATING...' : 'SIGNING IN...';
 
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isAndroid = /Android/i.test(navigator.userAgent);
+  const action = fbIsRegisterMode
+    ? createUserWithEmailAndPassword(auth, email, pass)
+    : signInWithEmailAndPassword(auth, email, pass);
 
-  if (isIOS || isAndroid) {
-    // มือถือ: บังคับ redirect — popup บน iOS Safari hang เสมอ
-    if (lbl) lbl.textContent = 'REDIRECTING...';
-    signInWithRedirect(auth, provider).catch(err => {
-      showLoginError('REDIRECT ERROR: ' + err.code + '\n' + err.message);
-    });
-    return;
-  }
-
-  // Desktop: ใช้ popup
-  if (lbl) lbl.textContent = 'SIGNING IN...';
-  signInWithPopup(auth, provider).catch(err => {
+  action.catch(err => {
     if (btn) btn.disabled = false;
-    if (lbl) lbl.textContent = 'SIGN IN WITH GOOGLE';
-    if (err.code === 'auth/popup-blocked' ||
-        err.code === 'auth/operation-not-supported-in-this-environment') {
-      if (lbl) lbl.textContent = 'REDIRECTING...';
-      if (btn) btn.disabled = true;
-      signInWithRedirect(auth, provider);
-    } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-      // ผู้ใช้ปิด popup เอง
-    } else {
-      showLoginError('ERROR: ' + err.code + '\n' + err.message);
-    }
+    if (lbl) lbl.textContent = fbIsRegisterMode ? 'CREATE ACCOUNT' : 'SIGN IN';
+    const msgs = {
+      'auth/invalid-email':        'Email ไม่ถูกต้อง',
+      'auth/user-not-found':       'ไม่พบบัญชีนี้ — ลองสมัครใหม่',
+      'auth/wrong-password':       'Password ไม่ถูกต้อง',
+      'auth/invalid-credential':   'Email หรือ Password ไม่ถูกต้อง',
+      'auth/email-already-in-use': 'Email นี้มีบัญชีแล้ว — ลอง Sign In',
+      'auth/weak-password':        'Password ต้องมีอย่างน้อย 6 ตัวอักษร',
+      'auth/too-many-requests':    'ลองหลายครั้งเกินไป — รอสักครู่แล้วลองใหม่',
+      'auth/network-request-failed': 'ไม่มีอินเทอร์เน็ต',
+    };
+    showLoginError(msgs[err.code] || ('ERROR: ' + err.code));
   });
 }
 
@@ -2844,7 +2911,7 @@ function fbSignOut() {
 function setSyncStatus(state, text) {
   const dot  = document.getElementById('fb-sync-dot');
   const span = document.getElementById('fb-sync-status');
-  dot.className  = 'fb-sync-dot ' + state;
+  if(dot) dot.className  = 'fb-sync-dot ' + state;
   span.textContent = text;
 }
 
@@ -2963,17 +3030,9 @@ async function cloudLoad(uid) {
   }
 }
 
-// ── AUTH STATE LISTENER (runs after Firebase module loads) ──
+// ── AUTH STATE LISTENER ──
 function initFirebaseAuth() {
-  const { auth, onAuthStateChanged, getRedirectResult } = window._fb;
-
-  // Handle redirect result (กรณีที่ใช้ signInWithRedirect)
-  getRedirectResult(auth).catch(err => {
-    if (err && err.code) {
-      console.error('Redirect result error:', err.message);
-      showLoginError('REDIRECT ERROR: ' + err.code + '\n' + err.message);
-    }
-  });
+  const { auth, onAuthStateChanged } = window._fb;
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -2985,11 +3044,12 @@ function initFirebaseAuth() {
       const avatarEl = document.getElementById('fb-avatar');
       if (user.photoURL) {
         avatarEl.innerHTML = `<img src="${user.photoURL}" alt="">`;
+      } else if (user.isAnonymous) {
+        avatarEl.textContent = '👤';
       } else {
         avatarEl.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
       }
-      document.getElementById('fb-user-name').textContent =
-        (user.displayName || user.email || '').toUpperCase();
+      { const _un = document.getElementById('fb-user-name'); if(_un) _un.textContent = user.isAnonymous ? 'GUEST' : (user.displayName || user.email || '').toUpperCase(); }
       // Load data from cloud
       await cloudLoad(user.uid);
     } else {
