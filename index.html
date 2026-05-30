@@ -200,6 +200,7 @@ body.dark .stat-card.pf-neutral { background: rgba(200,169,110,0.08); border-col
 body.dark .stat-label { color: rgba(255,255,255,0.3); letter-spacing: 2.5px; }
 body.dark .stat-value { color: #f0ead8; }
 body.dark .analysis-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+body.dark .trade-row.main-trade { border-color: var(--gold); background: var(--gold-pale); }
 body.dark .analysis-title { color: rgba(255,255,255,0.25); letter-spacing: 3px; }
 body.dark .capital-bar { background: linear-gradient(135deg, rgba(26,26,46,0.9) 0%, rgba(18,18,28,0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(200,169,110,0.15); box-shadow: 0 0 40px rgba(200,169,110,0.05), inset 0 1px 0 rgba(255,255,255,0.05); }
 body.dark .dd-stat { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); }
@@ -621,7 +622,7 @@ body {
 .btn-group { display: flex; gap: 8px; }
 
 /* Trade rows */
-.trades-section { margin-bottom: 14px; }
+.trades-section { margin-bottom: 14px; position: relative; z-index: 1; }
 .trades-label { font-size: 10px; color: var(--ink-faint); letter-spacing: 2px; margin-bottom: 8px; }
 #trade-rows {
   max-height: 300px; overflow-y: auto; padding-right: 4px;
@@ -634,8 +635,10 @@ body {
   background: var(--bg); border: 1px solid var(--ink-ghost); border-radius: 8px;
   padding: 10px 12px; margin-bottom: 8px; position: relative;
 }
+.trade-row.main-trade { border-color: var(--gold); background: var(--gold-pale); }
 .trade-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .trade-row-num { font-size: 10px; color: var(--ink-faint); letter-spacing: 1px; }
+.trade-row.main-trade .trade-row-num { color: var(--gold); font-weight: 700; }
 .trade-row-remove {
   background: transparent; border: none; color: var(--loss-bd); cursor: pointer;
   font-size: 16px; line-height: 1; padding: 0 2px; transition: color 0.15s;
@@ -698,6 +701,7 @@ body {
   width: 100%; padding: 9px; background: transparent; border: 1px dashed var(--ink-ghost);
   border-radius: 7px; color: var(--ink-faint); font-family: 'DM Mono', monospace; font-size: 12px;
   cursor: pointer; letter-spacing: 1px; transition: all 0.15s; margin-top: 4px; margin-bottom: 14px;
+  position: relative; z-index: 2;
 }
 .add-trade-btn:hover { border-color: var(--navy); color: var(--navy); }
 
@@ -1407,7 +1411,7 @@ body {
     <div class="trades-section">
       <div class="trades-label">TRADES</div>
       <div id="trade-rows"></div>
-      <button class="add-trade-btn" onclick="addTradeRow()">+ ADD TRADE</button>
+      <button type="button" class="add-trade-btn" onclick="addTradeRow()">+ ADD TRADE</button>
     </div>
 
     <div class="field">
@@ -1430,8 +1434,8 @@ body {
 
     <div class="modal-actions">
       <div class="btn-group" style="width:100%;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="closeModal()">CANCEL</button>
-        <button class="btn btn-gold" onclick="saveTrade()">SAVE</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">CANCEL</button>
+        <button type="button" class="btn btn-gold" onclick="saveTrade()">SAVE</button>
       </div>
     </div>
   </div>
@@ -2403,7 +2407,7 @@ function renderTradeRows() {
     div.innerHTML = `
       <div class="trade-row-header">
         <span class="trade-row-num">TRADE ${i+1}</span>
-        <button class="trade-row-remove" onclick="removeTradeRow(${i})" title="Remove trade">✕</button>
+        <button type="button" class="trade-row-remove" onclick="removeTradeRow(${i})" title="Remove trade">✕</button>
       </div>
       <div class="trf-label" style="margin-bottom:6px">PAIR</div>
       <div class="pair-grid">${pillsHTML}</div>
