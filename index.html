@@ -2788,9 +2788,14 @@ let fbSyncTimer = null;
 
 function fbSignIn() {
   const { auth, provider, signInWithPopup, signInWithRedirect } = window._fb;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isPwa = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isMobile || isPwa) {
+    signInWithRedirect(auth, provider);
+    return;
+  }
   signInWithPopup(auth, provider).catch(err => {
     if (err.code === 'auth/popup-blocked') {
-      // popup ถูกบล็อกโดย browser → ใช้ redirect แทน
       signInWithRedirect(auth, provider);
     } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
       // ผู้ใช้ปิด popup เอง — ไม่ต้องทำอะไร
