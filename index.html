@@ -1411,27 +1411,6 @@ body {
     </div>
 
     <div class="field">
-      <label>STRATEGY TAGS</label>
-      <div class="tags-grid" id="tags-grid">
-        <button class="tag-btn" onclick="toggleTag(this,'SMC')">SMC</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Scalping')">Scalping</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Day Trade')">Day Trade</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Swing Trade')">Swing Trade</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Breakout')">Breakout</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Reversal')">Reversal</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Trend Follow')">Trend Follow</button>
-        <button class="tag-btn" onclick="toggleTag(this,'News Play')">News Play</button>
-        <button class="tag-btn" onclick="toggleTag(this,'Fakeout')">Fakeout</button>
-        <button class="tag-btn" onclick="toggleTag(this,'London Open')">London Open</button>
-        <button class="tag-btn" onclick="toggleTag(this,'NY Open')">NY Open</button>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <input type="text" id="custom-tag-input" placeholder="Custom tag..." style="flex:1;padding:6px 10px;font-size:12px"/>
-        <button class="tag-btn" onclick="addCustomTag()" style="white-space:nowrap">+ ADD</button>
-      </div>
-    </div>
-
-    <div class="field">
       <label>EMOTION</label>
       <div class="emotions-grid">
         <button class="emo-btn" onclick="selectEmo(this,'calm')">😌<span>Calm</span></button>
@@ -2460,8 +2439,13 @@ function renderTradeRows() {
         }</span>
       </div>
       <div class="comm-tag" style="text-align:right">= Gross − Commission</div>
-      ` : ""}`;
-    container.appendChild(div);
+      ` : ""}
+      <div style="margin-top:10px">
+        <div class="trf-label" style="margin-bottom:6px">TECHNIQUE</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${['SMC','FVG','Day Trade','Scalping'].map(tag => `<button type="button" onclick="toggleTradeTag(${i},'${tag}')" style="padding:5px 12px;border-radius:20px;border:1px solid ${(row.tags||[]).includes(tag)?'var(--gold)':'var(--ink-ghost)'};background:${(row.tags||[]).includes(tag)?'var(--gold-pale)':'transparent'};color:${(row.tags||[]).includes(tag)?'var(--navy)':'var(--ink-faint)'};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;font-weight:${(row.tags||[]).includes(tag)?'700':'400'}">${tag}</button>`).join('')}
+        </div>
+      </div>`;
   });
 }
 
@@ -2479,8 +2463,16 @@ function onPairPill(i, val) {
   }
 }
 
+function toggleTradeTag(i, tag) {
+  if (!tradeRows[i].tags) tradeRows[i].tags = [];
+  const idx = tradeRows[i].tags.indexOf(tag);
+  if (idx >= 0) tradeRows[i].tags.splice(idx, 1);
+  else tradeRows[i].tags.push(tag);
+  renderTradeRows();
+}
+
 function addTradeRow() {
-  tradeRows.push({pair:"",pnl:null,wl:""});
+  tradeRows.push({pair:"",pnl:null,wl:"",tags:[]});
   renderTradeRows();
   document.getElementById("trade-rows").scrollTop = 99999;
 }
@@ -2538,12 +2530,11 @@ function openModal(d, key) {
   const t = trades[key]||{};
   { const _mt = document.getElementById("modal-title"); if(_mt) _mt.textContent = `${MONTHS[curMonth]} ${d}, ${curYear}`; }
   document.getElementById("inp-note").value = t.note||"";
-  if (t.tradeList&&t.tradeList.length>0) tradeRows=t.tradeList.map(r=>({...r}));
-  else if (t.pnl!==null&&t.pnl!==undefined&&t.pnl!=="") tradeRows=[{pair:t.pairs||"",pnl:Number(t.pnl),wl:Number(t.pnl)>=0?"win":"loss"}];
-  else tradeRows=[{pair:"",pnl:null,wl:""}];
+  if (t.tradeList&&t.tradeList.length>0) tradeRows=t.tradeList.map(r=>({...r, tags: r.tags||[]}));
+  else if (t.pnl!==null&&t.pnl!==undefined&&t.pnl!=="") tradeRows=[{pair:t.pairs||"",pnl:Number(t.pnl),wl:Number(t.pnl)>=0?"win":"loss",tags:[]}];
+  else tradeRows=[{pair:"",pnl:null,wl:"",tags:[]}];
   renderTradeRows();
-  selectedTags = t.tags?[...t.tags]:[];
-  document.querySelectorAll(".tag-btn").forEach(btn=>btn.classList.toggle("active",selectedTags.includes(btn.textContent.trim())));
+  selectedTags = [];
   selectedEmo = t.emotion||"";
   document.querySelectorAll(".emo-btn").forEach(btn=>btn.classList.toggle("active",btn.getAttribute("onclick").includes(`'${selectedEmo}'`)&&selectedEmo!==""));
   document.getElementById("overlay").classList.add("show");
@@ -2569,7 +2560,8 @@ function addCustomTag() {
   inp.value="";
 }
 document.addEventListener("DOMContentLoaded",()=>{
-  document.getElementById("custom-tag-input").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addCustomTag();}});
+  const cti = document.getElementById("custom-tag-input");
+  if(cti) cti.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addCustomTag();}});
 });
 function selectEmo(btn, emo) {
   document.querySelectorAll(".emo-btn").forEach(b=>b.classList.remove("active"));
@@ -2591,10 +2583,10 @@ function saveTrade() {
   // Use netPnl if available, else gross pnl
   const totalPnl=validRows.reduce((s,r)=>s+(r.netPnl!==null&&r.netPnl!==undefined?r.netPnl:(r.pnl||0)),0);
   const allPairs=[...new Set(validRows.map(r=>r.pair).filter(Boolean))].join(", ");
-  if(!validRows.length&&!note&&!selectedTags.length&&!selectedEmo){
+  if(!validRows.length&&!note&&!selectedEmo){
     delete trades[selectedKey];
   } else {
-    trades[selectedKey]={pnl:validRows.length?totalPnl:null,pairs:allPairs,tradeList:tradeRows.map(r=>({...r})),note,tags:[...selectedTags],emotion:selectedEmo};
+    trades[selectedKey]={pnl:validRows.length?totalPnl:null,pairs:allPairs,tradeList:tradeRows.map(r=>({...r})),note,tags:[],emotion:selectedEmo};
   }
   save(); haptic('success'); renderCalendar(); updateDailyHpBar(selectedKey); closeModal();
 }
