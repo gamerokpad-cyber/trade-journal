@@ -287,12 +287,13 @@ body {
 .logo-sub { font-size: 9px; color: var(--ink-faint); letter-spacing: 3px; padding-left: 42px; }
 .header-right {
   display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  padding-right: 4px;
 }
 .trader-label { font-size: 9px; color: var(--ink-faint); letter-spacing: 3px; }
 #inp-trader-name {
   background: transparent; border: none; border-bottom: 1px solid var(--ink-ghost);
   color: var(--navy); font-family: 'Bebas Neue', sans-serif; font-size: 20px;
-  letter-spacing: 3px; padding: 0 0 2px; width: 160px; outline: none;
+  letter-spacing: 3px; padding: 0 0 2px; width: 120px; outline: none;
   text-align: right; transition: border-color 0.2s; min-height: 44px;
 }
 #inp-trader-name:focus { border-color: var(--gold); }
@@ -1152,11 +1153,13 @@ body {
         </div>
         <div class="logo-sub">DAILY JOURNAL</div>
       </div>
-      <div class="header-right" style="flex-direction:row;align-items:center;gap:8px;">
-        <button id="btn-darkmode" onclick="toggleDarkMode()" style="background:transparent;border:1px solid var(--ink-ghost);border-radius:7px;padding:6px 9px;cursor:pointer;font-size:16px;line-height:1;color:var(--ink-faint);transition:all 0.15s;min-height:36px;flex-shrink:0;" title="Dark mode">🌙</button>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-          <div class="trader-label">TRADER</div>
-          <input type="text" id="inp-trader-name" placeholder="YOUR NAME" oninput="saveTraderName()"/>
+      <div class="header-right">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button id="btn-darkmode" onclick="toggleDarkMode()" style="background:transparent;border:1px solid var(--ink-ghost);border-radius:7px;padding:6px 9px;cursor:pointer;font-size:16px;line-height:1;color:var(--ink-faint);transition:all 0.15s;min-height:36px;flex-shrink:0;" title="Dark mode">🌙</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            <div class="trader-label">TRADER</div>
+            <input type="text" id="inp-trader-name" placeholder="YOUR NAME" oninput="saveTraderName()"/>
+          </div>
         </div>
       </div>
     </div>
@@ -2026,8 +2029,12 @@ function onLotInput(i) {
   if (!inp) return;
   const lot = inp.value === "" ? null : Number(inp.value);
   tradeRows[i].lot = lot;
-  // Auto-calculate commission from rate
-  if (lot !== null && commRate > 0) {
+  // Auto-calculate commission from rate (skip for spread-only pairs like XAUUSD)
+  const noCommPairs = ['XAUUSD'];
+  const isNoComm = noCommPairs.includes((tradeRows[i].pair || '').toUpperCase());
+  if (isNoComm) {
+    tradeRows[i].commission = null;
+  } else if (lot !== null && commRate > 0) {
     tradeRows[i].commission = parseFloat((lot * commRate).toFixed(2));
   } else if (lot === null) {
     tradeRows[i].commission = null;
@@ -2123,6 +2130,11 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   else if (pnl!==null) cls += pnl>=0?" profit":" loss";
   if (isToday) cls += " today";
   if(el) el.className = cls;
+  // hasData: มีข้อมูลบันทึกแม้ไม่มี PnL (pair, tag, note, emotion)
+  const hasData = t && (hasPnl ||
+    (t.tradeList && t.tradeList.some(r => r.pair || (r.tags && r.tags.length))) ||
+    (t.tags && t.tags.length) || t.note || t.emotion);
+
   let html = `<div class="day-num${isToday?" is-today":""}">${d}</div>`;
   if (hasPnl) {
     const tradeCount = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 1;
@@ -2135,8 +2147,19 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
     if (t.note) icons.push("📝");
     if (icons.length) html += `<div class="day-icons">${icons.join("")}</div>`;
     html += `<div class="pnl-bar" style="background:${pnl>=0?"rgba(45,106,79,0.4)":"rgba(155,35,53,0.35)"}"></div>`;
-  } else if (t&&t.note) {
-    html += `<div class="day-icons">📝</div>`;
+  } else if (hasData) {
+    // มีข้อมูลแต่ไม่มี PnL — แสดง pair, tags, emotion, note
+    const allTags = [...new Set([
+      ...(t.tags||[]),
+      ...(t.tradeList ? t.tradeList.flatMap(r=>r.tags||[]) : [])
+    ])];
+    const allPairs = t.pairs || (t.tradeList ? [...new Set(t.tradeList.map(r=>r.pair).filter(Boolean))].join(", ") : "");
+    if (allPairs) html += `<div class="day-pairs">${allPairs}</div>`;
+    if (allTags.length) html += `<div class="day-tags">${allTags.map(tg=>`<span class="day-tag">${tg}</span>`).join("")}</div>`;
+    const icons = [];
+    if (t.emotion) icons.push(EMO_MAP[t.emotion]||"");
+    if (t.note) icons.push("📝");
+    if (icons.length) html += `<div class="day-icons">${icons.join("")}</div>`;
   }
   el.innerHTML = html;
   el.addEventListener("click", ()=>{ updateDailyHpBar(key); openModal(d,key); });
@@ -2300,39 +2323,55 @@ function renderTagWinRate(entries) {
   const el = document.getElementById("tag-winrate");
   const tagMap = {};
   entries.forEach(([,v]) => {
-    const tags = v.tags || [];
-    if (!tags.length) return;
-    // Use individual trades from tradeList to count W/L per tag
-    const list = v.tradeList && v.tradeList.length ? v.tradeList : (v.pnl !== null && v.pnl !== undefined && v.pnl !== "" ? [{pnl: Number(v.pnl), wl: Number(v.pnl) >= 0 ? "win" : "loss"}] : []);
-    tags.forEach(tag => {
-      if (!tagMap[tag]) tagMap[tag] = {wins: 0, losses: 0, pnl: 0};
+    // Collect tags from both day-level (v.tags) AND trade-level (tradeList[i].tags)
+    const dayTags = v.tags || [];
+    const tradeLevelTags = v.tradeList ? [...new Set(v.tradeList.flatMap(r => r.tags||[]))] : [];
+    const allTags = [...new Set([...dayTags, ...tradeLevelTags])];
+    if (!allTags.length) return;
+    const list = v.tradeList && v.tradeList.length ? v.tradeList : (v.pnl !== null && v.pnl !== undefined && v.pnl !== "" ? [{pnl: Number(v.pnl), wl: Number(v.pnl) >= 0 ? "win" : "loss", tags: dayTags}] : []);
+    // For each trade, use that trade's own tags (or fall back to day tags)
+    if (list.length > 0) {
       list.forEach(r => {
-        if (r.pnl !== null && r.pnl !== undefined) {
-          const effectivePnl = (r.netPnl !== null && r.netPnl !== undefined) ? r.netPnl : (r.pnl || 0);
-          tagMap[tag].pnl += effectivePnl;
-          if (effectivePnl > 0 || (effectivePnl === 0 && r.wl === "win")) tagMap[tag].wins++;
-          else if (effectivePnl < 0 || (effectivePnl === 0 && r.wl === "loss")) tagMap[tag].losses++;
-        }
+        const tradeTags = (r.tags && r.tags.length) ? r.tags : dayTags;
+        const effectivePnl = (r.netPnl !== null && r.netPnl !== undefined) ? r.netPnl : (r.pnl !== null && r.pnl !== undefined ? r.pnl : null);
+        tradeTags.forEach(tag => {
+          if (!tagMap[tag]) tagMap[tag] = {wins: 0, losses: 0, pnl: 0, total: 0};
+          tagMap[tag].total++;
+          if (effectivePnl !== null) {
+            tagMap[tag].pnl += effectivePnl;
+            if (effectivePnl > 0 || (effectivePnl === 0 && r.wl === "win")) tagMap[tag].wins++;
+            else if (effectivePnl < 0 || (effectivePnl === 0 && r.wl === "loss")) tagMap[tag].losses++;
+          }
+        });
       });
-    });
+    } else {
+      // No trade list but has tags (tag-only day)
+      allTags.forEach(tag => {
+        if (!tagMap[tag]) tagMap[tag] = {wins: 0, losses: 0, pnl: 0, total: 0};
+        tagMap[tag].total++;
+      });
+    }
   });
-  const tags = Object.entries(tagMap).filter(([,d]) => (d.wins + d.losses) > 0)
-    .sort(([,a],[,b]) => (b.wins + b.losses) - (a.wins + a.losses));
+  const tags = Object.entries(tagMap)
+    .filter(([,d]) => d.total > 0)
+    .sort(([,a],[,b]) => b.total - a.total);
   if (!tags.length) { el.innerHTML = `<div class="no-data">NO STRATEGY DATA — แตะวันแล้วเลือก TAG เพื่อเริ่มติดตาม</div>`; return; }
   el.innerHTML = `<div class="tag-wr-rows">${tags.map(([tag, d]) => {
     const total = d.wins + d.losses;
-    const wr = Math.round(d.wins / total * 100);
-    const color = wr >= 60 ? clrProfit() : wr >= 45 ? clrGold() : clrLoss();
+    const wr = total > 0 ? Math.round(d.wins / total * 100) : null;
+    const wrDisplay = wr !== null ? wr + "%" : "—";
+    const color = wr === null ? clrInk() : wr >= 60 ? clrProfit() : wr >= 45 ? clrGold() : clrLoss();
     const isDark = document.body.classList.contains('dark');
-    const colorBg = wr >= 60 ? (isDark?"rgba(74,222,128,0.15)":"rgba(45,106,79,0.22)") : wr >= 45 ? (isDark?"rgba(200,169,110,0.15)":"rgba(184,151,90,0.22)") : (isDark?"rgba(248,113,113,0.15)":"rgba(155,35,53,0.16)");
+    const colorBg = wr === null ? "transparent" : wr >= 60 ? (isDark?"rgba(74,222,128,0.15)":"rgba(45,106,79,0.22)") : wr >= 45 ? (isDark?"rgba(200,169,110,0.15)":"rgba(184,151,90,0.22)") : (isDark?"rgba(248,113,113,0.15)":"rgba(155,35,53,0.16)");
     const pnlColor = d.pnl >= 0 ? clrProfit() : clrLoss();
+    const wlStr = total > 0 ? `${d.wins}W ${d.losses}L` : `${d.total} trades`;
     return `<div class="tag-wr-row">
       <div class="tag-wr-name">${tag}</div>
       <div class="tag-wr-bar-bg">
-        <div class="tag-wr-bar-fill" style="width:${wr}%;background:${colorBg};border-right:2px solid ${color}80"></div>
+        <div class="tag-wr-bar-fill" style="width:${wr||0}%;background:${colorBg};border-right:2px solid ${color}80"></div>
       </div>
-      <div class="tag-wr-pct" style="color:${color}">${wr}%</div>
-      <div class="tag-wr-meta">${d.wins}W ${d.losses}L</div>
+      <div class="tag-wr-pct" style="color:${color}">${wrDisplay}</div>
+      <div class="tag-wr-meta">${wlStr}</div>
       <div class="tag-wr-meta" style="color:${pnlColor};text-align:right">${d.pnl >= 0 ? "+" : ""}${d.pnl.toFixed(0)}</div>
     </div>`;
   }).join("")}</div>`;
@@ -2425,7 +2464,7 @@ function renderTradeRows() {
           <input type="number" class="${pnlClass}" id="pnl-${i}" placeholder="0.00" value="${row.pnl??""}" oninput="onPnlInput(${i})"/>
         </div>
       </div>
-      ${commRate > 0 ? `
+      ${(commRate > 0 && !(['XAUUSD'].includes((row.pair||'').toUpperCase()))) ? `
       <div class="comm-fields">
         <div>
           <div class="trf-label">LOT SIZE</div>
@@ -2483,7 +2522,7 @@ function addTradeRow() {
 }
 function removeTradeRow(i) {
   if (tradeRows.length === 1) {
-    tradeRows[0] = {pair:"", pnl:null, wl:""};
+    tradeRows[0] = {pair:"", pnl:null, wl:"", tags:[]};
   } else {
     tradeRows.splice(i, 1);
   }
@@ -2580,18 +2619,20 @@ function saveTrade() {
     const pi=document.getElementById(`pnl-${i}`); if(pi){ if(pi.value===""){row.pnl=null;}else{const abs=Math.abs(Number(pi.value));row.pnl=row.wl==="loss"?-abs:row.wl==="win"?abs:Number(pi.value);} }
     const li=document.getElementById(`lot-${i}`); if(li)row.lot=li.value===""?null:Number(li.value);
     const cmi=document.getElementById(`comm-${i}`); if(cmi)row.commission=cmi.value===""?null:Number(cmi.value);
-    // Recalculate netPnl on save
     row.netPnl = calcNetPnl(row);
+    if (!row.tags) row.tags = [];
   });
   const note=document.getElementById("inp-note").value.trim();
-  const validRows=tradeRows.filter(r=>r.pnl!==null||r.pair);
-  // Use netPnl if available, else gross pnl
+  const validRows=tradeRows.filter(r=>r.pnl!==null||r.pair||(r.tags&&r.tags.length>0));
   const totalPnl=validRows.reduce((s,r)=>s+(r.netPnl!==null&&r.netPnl!==undefined?r.netPnl:(r.pnl||0)),0);
   const allPairs=[...new Set(validRows.map(r=>r.pair).filter(Boolean))].join(", ");
-  if(!validRows.length&&!note&&!selectedEmo){
+  // Collect tags from all trade rows + selectedTags
+  const allRowTags=[...new Set(tradeRows.flatMap(r=>r.tags||[]))];
+  const mergedTags=[...new Set([...allRowTags,...selectedTags])];
+  if(!validRows.length&&!note&&!selectedEmo&&!mergedTags.length){
     delete trades[selectedKey];
   } else {
-    trades[selectedKey]={pnl:validRows.length?totalPnl:null,pairs:allPairs,tradeList:tradeRows.map(r=>({...r})),note,tags:[],emotion:selectedEmo};
+    trades[selectedKey]={pnl:validRows.length?totalPnl:null,pairs:allPairs,tradeList:tradeRows.map(r=>({...r})),note,tags:mergedTags,emotion:selectedEmo};
   }
   save(); haptic('success'); renderCalendar(); updateDailyHpBar(selectedKey); closeModal();
 }
@@ -2855,11 +2896,11 @@ function cloudSave() {
       const uid = fbUser.uid;
       // Save journals meta
       await setDoc(doc(db, 'users', uid, 'meta', 'journals'), {
-        journals, activeJournalId, capital,
+        journals, activeJournalId,
         traderName: document.getElementById('inp-trader-name').value,
         showWeekend, commRate, updatedAt: Date.now()
       });
-      // Save active journal trades
+      // Save active journal trades (capital เก็บที่นี่ที่เดียว)
       await setDoc(doc(db, 'users', uid, 'journals', activeJournalId), {
         trades, capital, updatedAt: Date.now()
       });
@@ -2908,7 +2949,7 @@ async function cloudLoad(uid) {
       if (m.journals && m.journals.length) {
         journals = m.journals;
         activeJournalId = m.activeJournalId || journals[0].id;
-        capital = m.capital || 0;
+        // capital ไม่อ่านจาก meta แล้ว — อ่านจาก journal แทน (แม่นกว่า)
         showWeekend = m.showWeekend || false;
         commRate = m.commRate || 0;
         if (m.traderName) {
