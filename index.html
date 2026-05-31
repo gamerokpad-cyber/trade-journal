@@ -2138,7 +2138,11 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
     const tradeCount = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 1;
     html += `<div class="day-pnl" style="color:${pnl>=0?clrProfit():clrLoss()}">$${fmt(pnl)}</div>`;
     if (tradeCount>1) html += `<div class="day-trade-count">${tradeCount} trades</div>`;
-    if (t.pairs) html += `<div class="day-pairs">${t.pairs}</div>`;
+    if (t.pairs) {
+      const pairList = t.pairs.split(",").map(p=>p.trim()).filter(Boolean);
+      const pairDisplay = pairList.length > 1 ? `${pairList.length} pairs` : pairList[0];
+      html += `<div class="day-pairs">${pairDisplay}</div>`;
+    }
 
     const icons = [];
     if (t.emotion) icons.push(EMO_MAP[t.emotion]||"");
@@ -2148,8 +2152,12 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   } else if (hasData) {
     // มีข้อมูลแต่ไม่มี PnL — แสดง pair, tags, emotion, note
     const allTags = t.tags||[];
-    const allPairs = t.pairs || (t.tradeList ? [...new Set(t.tradeList.map(r=>r.pair).filter(Boolean))].join(", ") : "");
-    if (allPairs) html += `<div class="day-pairs">${allPairs}</div>`;
+    const rawPairs = t.pairs || (t.tradeList ? [...new Set(t.tradeList.map(r=>r.pair).filter(Boolean))].join(", ") : "");
+    if (rawPairs) {
+      const pairList2 = rawPairs.split(",").map(p=>p.trim()).filter(Boolean);
+      const pairDisplay2 = pairList2.length > 1 ? `${pairList2.length} pairs` : pairList2[0];
+      html += `<div class="day-pairs">${pairDisplay2}</div>`;
+    }
 
     const icons = [];
     if (t.emotion) icons.push(EMO_MAP[t.emotion]||"");
