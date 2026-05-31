@@ -2152,6 +2152,8 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   } else if (hasData) {
     // มีข้อมูลแต่ไม่มี PnL — แสดง pair, tags, emotion, note
     const allTags = t.tags||[];
+    const tradeCount2 = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 0;
+    if (tradeCount2 > 1) html += `<div class="day-trade-count">${tradeCount2} trades</div>`;
     const rawPairs = t.pairs || (t.tradeList ? [...new Set(t.tradeList.map(r=>r.pair).filter(Boolean))].join(", ") : "");
     if (rawPairs) {
       const pairList2 = rawPairs.split(",").map(p=>p.trim()).filter(Boolean);
