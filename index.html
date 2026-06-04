@@ -2178,6 +2178,7 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   if (hasPnl) {
     const tradeCount = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 1;
     html += `<div class="day-pnl" style="color:${pnl>=0?clrProfit():clrLoss()}">$${fmt(pnl)}</div>`;
+    html += `<div class="day-trade-count">${tradeCount} ${tradeCount===1?'trade':'trades'}</div>`;
     if (t.pairs) {
       const pairList = t.pairs.split(",").map(p=>p.trim()).filter(Boolean);
       const pairDisplay = pairList.length > 1 ? `${pairList.length} pairs` : pairList[0];
@@ -2193,6 +2194,7 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
     // มีข้อมูลแต่ไม่มี PnL — แสดง pair, tags, emotion, note
     const allTags = t.tags||[];
     const tradeCount2 = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 0;
+    if (tradeCount2 > 0) html += `<div class="day-trade-count">${tradeCount2} ${tradeCount2===1?'trade':'trades'}</div>`;
     const rawPairs = t.pairs || (t.tradeList ? [...new Set(t.tradeList.map(r=>r.pair).filter(Boolean))].join(", ") : "");
     if (rawPairs) {
       const pairList2 = rawPairs.split(",").map(p=>p.trim()).filter(Boolean);
@@ -2554,7 +2556,10 @@ function renderTradeRows() {
         </div>
         <div>
           <div class="trf-label">RR <span style="opacity:0.4;font-size:8px">optional</span></div>
-          <input type="number" id="rr-${i}" placeholder="e.g. 2.0" step="0.1" min="0" value="${row.rr??""}" oninput="onRrInput(${i})" style="font-family:'DM Mono',monospace;font-size:12px;width:100%;border:1px solid var(--ink-ghost);border-radius:6px;padding:8px 10px;background:var(--bg);color:var(--ink);outline:none;"/>
+          <div style="display:flex;align-items:center;border:1px solid var(--ink-ghost);border-radius:6px;background:var(--bg);overflow:hidden">
+            <span style="padding:8px 8px 8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap">1 :</span>
+            <input type="number" id="rr-${i}" placeholder="2.0" step="0.1" min="0" value="${row.rr??""}" oninput="onRrInput(${i})" style="font-family:'DM Mono',monospace;font-size:12px;width:100%;border:none;padding:8px 10px 8px 4px;background:transparent;color:var(--ink);outline:none;"/>
+          </div>
         </div>
       </div>
       ${(commRate > 0 && !(['XAUUSD'].includes((row.pair||'').toUpperCase()))) ? `
@@ -2577,7 +2582,18 @@ function renderTradeRows() {
       <div class="comm-tag" style="text-align:right">= Gross − Commission</div>
       ` : ""}
       <div style="margin-top:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="trf-label">TECHNIQUE</div>
+          <button type="button" onclick="toggleTechEditMode()" style="border:none;background:transparent;color:${techEditMode?'var(--gold)':'var(--ink-faint)'};font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid ${techEditMode?'var(--gold)':'var(--ink-ghost)'}">${techEditMode?'✓ เสร็จ':'✏️ แก้ไข'}</button>
         </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${getTechniques().map(tag => { const sel=(row.tags||[]).includes(tag); return techEditMode
+            ? `<div style="display:flex;align-items:center;border-radius:20px;border:1px solid var(--ink-ghost);background:transparent;overflow:hidden"><span style="padding:5px 8px 5px 12px;color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px">${tag}</span><button type="button" onclick="deleteTechnique('${tag}')" style="padding:2px 8px 2px 2px;border:none;background:transparent;color:var(--ink-ghost);font-size:12px;cursor:pointer;line-height:1" title="ลบ">×</button></div>`
+            : `<button type="button" onclick="toggleTradeTag(${i},'${tag}')" style="padding:5px 14px;border-radius:20px;border:1px solid ${sel?'var(--gold)':'var(--ink-ghost)'};background:${sel?'var(--gold-pale)':'transparent'};color:${sel?'var(--navy)':'var(--ink-faint)'};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;font-weight:${sel?'700':'400'}">${tag}</button>`
+          }).join('')}
+          ${techEditMode ? `<input class="tech-add-inp" type="text" placeholder="+ เพิ่ม…" onkeydown="if(event.key==='Enter'){addTechnique(this.value);this.value='';event.preventDefault();}" style="border:1px dashed var(--gold);border-radius:20px;background:transparent;color:var(--ink);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 12px;width:90px;outline:none"/>` : ''}
+        </div>
+      </div>
       </div>`;
     container.appendChild(div);
   });
