@@ -2465,7 +2465,7 @@ function renderRrSummary(entries) {
         <div class="stat-value">${best.toFixed(2)}</div>
       </div>
     </div>
-    <div style="font-size:10px;color:var(--ink-ghost);letter-spacing:1px;margin-bottom:16px">จากทั้งหมด ${rrTrades.length} trade ที่กรอก RR</div>
+    <div style="font-size:10px;color:var(--ink-faint);letter-spacing:1px;margin-bottom:16px">จากทั้งหมด ${rrTrades.length} trade ที่กรอก RR</div>
     ${(()=>{
       const groups = [
         { label:'1 : 1', min:0.8, max:1.49 },
@@ -2486,7 +2486,7 @@ function renderRrSummary(entries) {
             <div style="width:${barW}%;height:100%;background:${color};border-radius:3px;transition:width 0.3s"></div>
           </div>
           <div style="font-size:10px;color:${color};width:36px;text-align:right;flex-shrink:0">${wr}%</div>
-          <div style="font-size:9px;color:var(--ink-ghost);width:52px;flex-shrink:0">${ts.length} trade${ts.length>1?'s':''}</div>
+          <div style="font-size:9px;color:var(--ink-faint);width:52px;flex-shrink:0">${ts.length} trade${ts.length>1?'s':''}</div>
         </div>`;
       }).join('');
       if (!rows) return '';
