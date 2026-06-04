@@ -2233,6 +2233,7 @@ function getAnalysisEntries() {
 function renderAnalysis() {
   const entries = getAnalysisEntries();
   if (!entries.length) {
+    ["pnl-curve-wrap","pair-breakdown","emotion-analysis","tag-winrate","rr-summary","drawdown-section"].forEach(id=>{
       const el = document.getElementById(id);
       if (el) el.innerHTML = `<div class="no-data">NO DATA YET</div>`;
     });
@@ -2945,6 +2946,11 @@ function fbSignInGoogle() {
   });
 }
 
+
+function confirmAnonymousLogin() {
+  const w = document.getElementById('anon-warning');
+  if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
+}
 
 function fbSignInAnonymous() {
   if (!window._fb) { showLoginError('Firebase ยังโหลดไม่เสร็จ — รอสักครู่แล้วลองใหม่'); return; }
