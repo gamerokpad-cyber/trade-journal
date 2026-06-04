@@ -258,7 +258,7 @@ body {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; cursor: pointer; padding: 8px 0;
   border: none; background: transparent; color: var(--ink-faint);
-  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px;
   transition: color 0.2s, transform 0.15s;
   -webkit-tap-highlight-color: transparent;
   min-height: 44px;
@@ -271,7 +271,7 @@ body {
 }
 .nav-tab svg { width: 22px; height: 22px; transition: transform 0.2s; }
 .nav-tab.active svg { transform: scale(1.1); }
-.nav-tab-label { font-size: 9px; letter-spacing: 1.5px; }
+.nav-tab-label { font-size: 11px; letter-spacing: 1px; }
 
 .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px 16px; }
 
@@ -446,7 +446,7 @@ body {
   border-radius: var(--radius); padding: 12px 14px;
   box-shadow: var(--shadow);
 }
-.stat-label { font-size: 9px; color: var(--ink-faint); letter-spacing: 2px; margin-bottom: 5px; }
+.stat-label { font-size: 11px; color: var(--ink-faint); letter-spacing: 1.5px; margin-bottom: 5px; }
 .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; color: var(--ink); }
 .stat-sub { font-size: 9px; color: var(--ink-faint); margin-top: 3px; letter-spacing: 1px; }
 
@@ -568,7 +568,7 @@ body {
 .modal-delete-icon:active { transform: scale(0.93); }
 .modal-line { width: 40px; height: 1px; background: var(--ink-ghost); margin-bottom: 18px; }
 .field { margin-bottom: 14px; }
-.field label { font-size: 10px; color: var(--ink-faint); letter-spacing: 2px; display: block; margin-bottom: 6px; }
+.field label { font-size: 11px; color: var(--ink-faint); letter-spacing: 1.5px; display: block; margin-bottom: 6px; }
 .field input, .field textarea, .field select {
   background: var(--bg); border: 1px solid var(--ink-ghost); border-radius: 6px;
   color: var(--ink); padding: 9px 12px; font-family: 'DM Mono', monospace;
@@ -624,7 +624,6 @@ body {
 
 /* Trade rows */
 .trades-section { margin-bottom: 14px; position: relative; z-index: 1; }
-.trades-label { font-size: 10px; color: var(--ink-faint); letter-spacing: 2px; margin-bottom: 8px; }
 #trade-rows {
   max-height: 300px; overflow-y: auto; padding-right: 4px;
   scrollbar-width: thin; scrollbar-color: var(--ink-ghost) transparent;
@@ -714,7 +713,7 @@ body {
   box-shadow: var(--shadow);
 }
 .analysis-card.full { grid-column: 1 / -1; }
-.analysis-title { font-size: 10px; color: var(--ink-faint); letter-spacing: 2px; margin-bottom: 16px; }
+.analysis-title { font-size: 11px; color: var(--ink-faint); letter-spacing: 1.5px; margin-bottom: 16px; }
 .chart-canvas-wrap { position: relative; width: 100%; }
 
 /* Bar chart */
@@ -1119,7 +1118,6 @@ body {
       <span style="font-size:10px;color:var(--ink-faint);letter-spacing:1.5px;">หรือ</span>
       <div style="flex:1;height:1px;background:var(--ink-ghost);"></div>
     </div>
-    <button onclick="fbSignInAnonymous()"
       style="margin-top:10px;background:transparent;border:1px solid var(--ink-ghost);border-radius:10px;color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;cursor:pointer;padding:12px;width:100%;transition:all 0.15s;"
       onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--ink-ghost)'">
       👤 ลองใช้โดยไม่สมัคร
@@ -1365,6 +1363,13 @@ body {
     </div>
 
     <div class="analysis-grid">
+      <div class="analysis-card full">
+        <div class="analysis-title">RR SUMMARY</div>
+        <div id="rr-summary"></div>
+      </div>
+    </div>
+
+    <div class="analysis-grid">
       <!-- Drawdown / Streaks -->
       <div class="analysis-card full">
         <div class="analysis-title">DRAWDOWN & STREAKS</div>
@@ -1524,6 +1529,28 @@ const ACTIVE_JOURNAL_KEY = "trading-journal-active-id";
 let trades = {};
 let capital = 0;
 let showWeekend = false;
+const TECHNIQUE_KEY = 'tradelog-techniques';
+const DEFAULT_TECHNIQUES = ['SMC','FVG','Day Trade','Scalping'];
+function getTechniques() {
+  try { const s = localStorage.getItem(TECHNIQUE_KEY); return s ? JSON.parse(s) : [...DEFAULT_TECHNIQUES]; } catch { return [...DEFAULT_TECHNIQUES]; }
+}
+function saveTechniques(arr) { localStorage.setItem(TECHNIQUE_KEY, JSON.stringify(arr)); }
+let techEditMode = false;
+function addTechnique(name) {
+  const t = name.trim(); if (!t) return;
+  const arr = getTechniques(); if (arr.includes(t)) return;
+  arr.push(t); saveTechniques(arr); renderTradeRows();
+}
+function toggleTechEditMode() {
+  techEditMode = !techEditMode; renderTradeRows();
+  if (techEditMode) setTimeout(()=>{ document.querySelector('.tech-add-inp')?.focus(); },50);
+}
+function deleteTechnique(name) {
+  const arr = getTechniques().filter(t => t !== name);
+  saveTechniques(arr);
+  tradeRows.forEach(r => { if (r.tags) r.tags = r.tags.filter(t => t !== name); });
+  renderTradeRows();
+}
 let analysisPeriod = 'month';
 let curYear, curMonth, selectedKey;
 const today = new Date();
@@ -2052,6 +2079,11 @@ function onCommInput(i) {
   tradeRows[i].netPnl = calcNetPnl(tradeRows[i]);
   updateNetDisplay(i);
 }
+function onRrInput(i) {
+  const inp = document.getElementById(`rr-${i}`);
+  if (!inp) return;
+  tradeRows[i].rr = inp.value === "" ? null : Number(inp.value);
+}
 
 function updateNetDisplay(i) {
   const netEl = document.getElementById(`net-${i}`);
@@ -2137,7 +2169,6 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
   if (hasPnl) {
     const tradeCount = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 1;
     html += `<div class="day-pnl" style="color:${pnl>=0?clrProfit():clrLoss()}">$${fmt(pnl)}</div>`;
-    if (tradeCount>1) html += `<div class="day-trade-count">${tradeCount} trades</div>`;
     if (t.pairs) {
       const pairList = t.pairs.split(",").map(p=>p.trim()).filter(Boolean);
       const pairDisplay = pairList.length > 1 ? `${pairList.length} pairs` : pairList[0];
@@ -2153,7 +2184,6 @@ function renderDayCell(cal, d, key, todayStr, isWeekend) {
     // มีข้อมูลแต่ไม่มี PnL — แสดง pair, tags, emotion, note
     const allTags = t.tags||[];
     const tradeCount2 = t.tradeList ? t.tradeList.filter(r=>r.pnl!==null).length : 0;
-    if (tradeCount2 > 1) html += `<div class="day-trade-count">${tradeCount2} trades</div>`;
     const rawPairs = t.pairs || (t.tradeList ? [...new Set(t.tradeList.map(r=>r.pair).filter(Boolean))].join(", ") : "");
     if (rawPairs) {
       const pairList2 = rawPairs.split(",").map(p=>p.trim()).filter(Boolean);
@@ -2194,7 +2224,6 @@ function getAnalysisEntries() {
 function renderAnalysis() {
   const entries = getAnalysisEntries();
   if (!entries.length) {
-    ["pnl-curve-wrap","pair-breakdown","emotion-analysis","tag-winrate","drawdown-section"].forEach(id=>{
       const el = document.getElementById(id);
       if (el) el.innerHTML = `<div class="no-data">NO DATA YET</div>`;
     });
@@ -2204,6 +2233,7 @@ function renderAnalysis() {
   renderPairBreakdown(entries);
   renderEmotionAnalysis(entries);
   renderTagWinRate(entries);
+  renderRrSummary(entries);
   renderDrawdown(entries);
 }
 
@@ -2382,6 +2412,50 @@ function renderTagWinRate(entries) {
   }).join("")}</div>`;
 }
 
+function renderRrSummary(entries) {
+  const el = document.getElementById("rr-summary");
+  if (!el) return;
+  const rrTrades = [];
+  entries.forEach(([,v]) => {
+    (v.tradeList||[]).forEach(r => {
+      if (r.rr === null || r.rr === undefined || r.rr === "") return;
+      const rr = Number(r.rr);
+      if (isNaN(rr) || rr <= 0) return;
+      const pnl = (r.netPnl !== null && r.netPnl !== undefined) ? r.netPnl : (r.pnl ?? null);
+      const win = pnl !== null ? pnl > 0 : (r.wl === "win");
+      rrTrades.push({ rr, win, pnl });
+    });
+  });
+  if (!rrTrades.length) { el.innerHTML = `<div class="no-data">ยังไม่มีข้อมูล RR — กรอก RR ในแต่ละ trade เพื่อเริ่มวิเคราะห์</div>`; return; }
+  const avg = rrTrades.reduce((s,t) => s + t.rr, 0) / rrTrades.length;
+  const wins = rrTrades.filter(t => t.win);
+  const losses = rrTrades.filter(t => !t.win);
+  const avgWin = wins.length ? wins.reduce((s,t) => s + t.rr, 0) / wins.length : null;
+  const avgLoss = losses.length ? losses.reduce((s,t) => s + t.rr, 0) / losses.length : null;
+  const best = Math.max(...rrTrades.map(t => t.rr));
+  const isDark = document.body.classList.contains('dark');
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+      <div style="text-align:center">
+        <div class="stat-label">AVG RR</div>
+        <div class="stat-value" style="color:var(--gold)">${avg.toFixed(2)}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="stat-label">AVG RR (WIN)</div>
+        <div class="stat-value" style="color:${clrProfit()}">${avgWin !== null ? avgWin.toFixed(2) : '—'}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="stat-label">AVG RR (LOSS)</div>
+        <div class="stat-value" style="color:${clrLoss()}">${avgLoss !== null ? avgLoss.toFixed(2) : '—'}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="stat-label">BEST RR</div>
+        <div class="stat-value">${best.toFixed(2)}</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--ink-ghost);letter-spacing:1px">จากทั้งหมด ${rrTrades.length} trade ที่กรอก RR</div>`;
+}
+
 function renderDrawdown(entries) {
   const el = document.getElementById("drawdown-section");
   if (!entries.length) { el.innerHTML = `<div class="no-data">NO DATA</div>`; return; }
@@ -2468,6 +2542,10 @@ function renderTradeRows() {
           <div class="trf-label">GROSS P&L ($)</div>
           <input type="number" class="${pnlClass}" id="pnl-${i}" placeholder="0.00" value="${row.pnl??""}" oninput="onPnlInput(${i})"/>
         </div>
+        <div>
+          <div class="trf-label">RR <span style="opacity:0.4;font-size:8px">optional</span></div>
+          <input type="number" id="rr-${i}" placeholder="e.g. 2.0" step="0.1" min="0" value="${row.rr??""}" oninput="onRrInput(${i})" style="font-family:'DM Mono',monospace;font-size:12px;width:100%;border:1px solid var(--ink-ghost);border-radius:6px;padding:8px 10px;background:var(--bg);color:var(--ink);outline:none;"/>
+        </div>
       </div>
       ${(commRate > 0 && !(['XAUUSD'].includes((row.pair||'').toUpperCase()))) ? `
       <div class="comm-fields">
@@ -2489,9 +2567,6 @@ function renderTradeRows() {
       <div class="comm-tag" style="text-align:right">= Gross − Commission</div>
       ` : ""}
       <div style="margin-top:10px">
-        <div class="trf-label" style="margin-bottom:6px">TECHNIQUE</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${['SMC','FVG','Day Trade','Scalping'].map(tag => `<button type="button" onclick="toggleTradeTag(${i},'${tag}')" style="padding:5px 12px;border-radius:20px;border:1px solid ${(row.tags||[]).includes(tag)?'var(--gold)':'var(--ink-ghost)'};background:${(row.tags||[]).includes(tag)?'var(--gold-pale)':'transparent'};color:${(row.tags||[]).includes(tag)?'var(--navy)':'var(--ink-faint)'};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;font-weight:${(row.tags||[]).includes(tag)?'700':'400'}">${tag}</button>`).join('')}
         </div>
       </div>`;
     container.appendChild(div);
