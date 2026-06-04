@@ -1118,10 +1118,19 @@ body {
       <span style="font-size:10px;color:var(--ink-faint);letter-spacing:1.5px;">หรือ</span>
       <div style="flex:1;height:1px;background:var(--ink-ghost);"></div>
     </div>
+    <button onclick="confirmAnonymousLogin()"
       style="margin-top:10px;background:transparent;border:1px solid var(--ink-ghost);border-radius:10px;color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;cursor:pointer;padding:12px;width:100%;transition:all 0.15s;"
       onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--ink-ghost)'">
       👤 ลองใช้โดยไม่สมัคร
     </button>
+    <div id="anon-warning" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(184,151,90,0.1);border:1px solid rgba(184,151,90,0.4);border-radius:10px;text-align:left;">
+      <div style="font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:6px;">⚠️ ข้อมูลจะหายถ้าปิดแอป</div>
+      <div style="font-size:10px;color:var(--ink-faint);letter-spacing:0.5px;line-height:1.7;margin-bottom:10px;">โหมดทดลองไม่บันทึกข้อมูลบน Cloud<br>ถ้าปิดหรือ refresh หน้า ข้อมูลทั้งหมดจะหายทันที</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="fbSignInAnonymous()" style="flex:1;padding:9px;border-radius:8px;background:var(--gold);border:none;color:var(--navy);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;font-weight:700;cursor:pointer;">เข้าใจแล้ว ดำเนินการต่อ</button>
+        <button onclick="document.getElementById('anon-warning').style.display='none'" style="flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid var(--ink-ghost);color:var(--ink-faint);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">ยกเลิก</button>
+      </div>
+    </div>
     <div id="fb-login-error" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(155,35,53,0.1);border:1px solid rgba(155,35,53,0.3);border-radius:8px;font-size:11px;color:#9B2335;letter-spacing:0.5px;line-height:1.6;text-align:left;white-space:pre-line;"></div>
     <div class="fb-login-note" style="margin-top:14px;">ข้อมูลของคุณถูกเก็บในบัญชี Firebase ส่วนตัว<br>ไม่มีการแชร์ข้อมูลกับผู้อื่น</div>
   </div>
@@ -2650,6 +2659,7 @@ function onPnlInput(i) {
 
 function openModal(d, key) {
   haptic('light');
+  techEditMode = false;
   selectedKey = key;
   const t = trades[key]||{};
   { const _mt = document.getElementById("modal-title"); if(_mt) _mt.textContent = `${MONTHS[curMonth]} ${d}, ${curYear}`; }
