@@ -2974,21 +2974,14 @@ function fbSignInGoogle() {
   const { auth, googleProvider, signInWithPopup, signInWithRedirect } = window._fb;
   const errEl = document.getElementById('fb-login-error');
   if (errEl) errEl.style.display = 'none';
-  const isWebView = /wv|WebView/i.test(navigator.userAgent) || (navigator.userAgent.includes('Android') && !navigator.userAgent.includes('Chrome/'));
-  if (isWebView) {
-    signInWithRedirect(auth, googleProvider).catch(err => {
-      showLoginError('ERROR: ' + err.code);
-    });
-  } else {
-    signInWithPopup(auth, googleProvider).catch(err => {
-      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
-      if (err.code === 'auth/popup-blocked') {
-        showLoginError('Browser บล็อก Popup\nกรุณาอนุญาต popup แล้วลองใหม่');
-        return;
-      }
-      showLoginError('ERROR: ' + err.code);
-    });
-  }
+  signInWithPopup(auth, googleProvider).catch(err => {
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    if (err.code === 'auth/popup-blocked') {
+      showLoginError('Browser บล็อก Popup\nกรุณาอนุญาต popup แล้วลองใหม่');
+      return;
+    }
+    showLoginError('ERROR: ' + err.code);
+  });
 }
 
 
@@ -3143,7 +3136,9 @@ async function cloudLoad(uid) {
 
 // ── AUTH STATE LISTENER ──
 function initFirebaseAuth() {
-  const { auth, onAuthStateChanged } = window._fb;
+  const { auth, onAuthStateChanged, getRedirectResult } = window._fb;
+
+  getRedirectResult(auth).catch(() => {});
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
