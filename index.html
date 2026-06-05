@@ -52,7 +52,7 @@ const icon512 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0e
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-  import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc }
     from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
@@ -73,7 +73,7 @@ const icon512 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0e
   const googleProvider = new GoogleAuthProvider();
 
   // expose to global so non-module scripts can call
-  window._fb = { auth, db, googleProvider, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, doc, getDoc, setDoc, collection, getDocs, deleteDoc };
+  window._fb = { auth, db, googleProvider, signInAnonymously, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, getDoc, setDoc, collection, getDocs, deleteDoc };
 </script>
 
 <!-- Preconnect fonts -->
@@ -2971,15 +2971,10 @@ function showLoginError(msg) {
 
 function fbSignInGoogle() {
   if (!window._fb) { showLoginError('Firebase ยังโหลดไม่เสร็จ — รอสักครู่แล้วลองใหม่'); return; }
-  const { auth, googleProvider, signInWithPopup } = window._fb;
+  const { auth, googleProvider, signInWithRedirect } = window._fb;
   const errEl = document.getElementById('fb-login-error');
   if (errEl) errEl.style.display = 'none';
-  signInWithPopup(auth, googleProvider).catch(err => {
-    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
-    if (err.code === 'auth/popup-blocked') {
-      showLoginError('Browser บล็อก Popup\nกรุณาอนุญาต popup แล้วลองใหม่');
-      return;
-    }
+  signInWithRedirect(auth, googleProvider).catch(err => {
     showLoginError('ERROR: ' + err.code);
   });
 }
