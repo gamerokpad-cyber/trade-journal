@@ -2574,13 +2574,6 @@ function renderTradeRows() {
           <div class="trf-label">GROSS P&L ($)</div>
           <input type="number" class="${pnlClass}" id="pnl-${i}" placeholder="0.00" value="${row.pnl??""}" oninput="onPnlInput(${i})"/>
         </div>
-        <div>
-          <div class="trf-label">RR <span style="opacity:0.4;font-size:8px">optional</span></div>
-          <div style="display:flex;align-items:center;border:1px solid var(--ink-ghost);border-radius:6px;background:var(--bg);overflow:hidden">
-            <span style="padding:8px 8px 8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap">1 :</span>
-            <input type="number" id="rr-${i}" placeholder="—" step="0.1" min="0" value="${row.rr??""}" oninput="onRrInput(${i})" style="font-family:'DM Mono',monospace;font-size:12px;width:100%;border:none;padding:8px 10px 8px 4px;background:transparent;color:var(--ink);outline:none;"/>
-          </div>
-        </div>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -2593,6 +2586,15 @@ function renderTradeRows() {
             : `<button type="button" onclick="toggleTradeTag(${i},'${tag}')" style="padding:5px 14px;border-radius:20px;border:1px solid ${sel?'var(--gold)':'var(--ink-ghost)'};background:${sel?'var(--gold-pale)':'transparent'};color:${sel?'var(--navy)':'var(--ink-faint)'};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;font-weight:${sel?'700':'400'}">${tag}</button>`
           }).join('')}
           ${techEditMode ? `<input class="tech-add-inp" type="text" placeholder="+ เพิ่ม…" onkeydown="if(event.key==='Enter'){addTechnique(this.value);this.value='';event.preventDefault();}" style="border:1px dashed var(--gold);border-radius:20px;background:transparent;color:var(--ink);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 12px;width:90px;outline:none"/>` : ''}
+        </div>
+      </div>
+      <div class="trade-row-fields" style="margin-top:8px">
+        <div>
+          <div class="trf-label">RR <span style="opacity:0.4;font-size:8px">optional</span></div>
+          <div style="display:flex;align-items:center;border:1px solid var(--ink-ghost);border-radius:6px;background:var(--bg);overflow:hidden">
+            <span style="padding:8px 8px 8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap">1 :</span>
+            <input type="number" id="rr-${i}" placeholder="—" step="0.1" min="0" value="${row.rr??""}" oninput="onRrInput(${i})" style="font-family:'DM Mono',monospace;font-size:12px;width:100%;border:none;padding:8px 10px 8px 4px;background:transparent;color:var(--ink);outline:none;"/>
+          </div>
         </div>
       </div>
       ${(commRate > 0 && !(['XAUUSD'].includes((row.pair||'').toUpperCase()))) ? `
